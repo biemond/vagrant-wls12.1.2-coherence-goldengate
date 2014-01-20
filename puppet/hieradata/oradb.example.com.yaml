@@ -1,0 +1,23 @@
+---
+messageEnv: 'oradb'
+
+# global oracle vars
+oracle_base_dir:          '/oracle'
+oracle_home_dir:          '/oracle/product/11.2/db'
+oracle_version:           '11.2'
+
+# global OS vars
+ggate_os_user:            "ggate"
+oracle_os_user:           "oracle"
+oracle_os_group:          "dba"
+oracle_download_dir:      "/install"
+oracle_source:            "/software"
+
+oracle_database_name:         'test'
+oracle_database_domain_name:  'oracle.com'  
+oracle_database_service_name: 'test.oracle.com'
+
+
+oracle_database_sys_password:    'Welcome01'
+oracle_database_system_password: 'Welcome01'
+
