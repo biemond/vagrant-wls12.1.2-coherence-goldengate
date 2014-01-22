@@ -171,45 +171,6 @@ class oradb_11g {
 class goldengate_11g {
    require oradb_11g
 
-      $ggateFile       = '121200_fbo_ggs_Linux_x64_shiphome.zip'
-      $ggateInstallDir = '121200_fbo_ggs_Linux_x64_shiphome'
-      $installDir      = '/installgg'
-      $sourceDir       = '/vagrant'
-      $softwareDir     = hiera('oracle_source')
-
-      file { $installDir :
-        ensure        => directory,
-        recurse       => false,
-        replace       => false,
-        mode          => 0775,
-        owner         => hiera('ggate_os_user'),
-        group         => hiera('oracle_os_group'),
-      }
-
-      file { "${installDir}/${ggateFile}":
-        source      => "${softwareDir}/${ggateFile}",
-        require     => File[$installDir],
-        owner       => hiera('ggate_os_user'),
-        group       => hiera('oracle_os_group'),
-      }
-
-      exec { "extract 121200_fbo_ggs_Linux_x64_shiphome":
-        command     => "unzip -o ${installDir}/${ggateFile} -d ${installDir}/${ggateInstallDir}",
-        require     => File["${installDir}/${ggateFile}"],
-        creates     => "${installDir}/${ggateInstallDir}/fbo_ggs_Linux_x64_shiphome",
-        timeout     => 0,
-        path        => "/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin",
-        user        => hiera('ggate_os_user'),
-        group       => hiera('oracle_os_group'),
-      }
-
-      file { "${installDir}/oggcore.rsp":
-        source      => "${sourceDir}/oggcore.rsp",
-        require     => File[$installDir],
-        owner       => hiera('ggate_os_user'),
-        group       => hiera('oracle_os_group'),
-      }
-
       file { "/oracle/product" :
         ensure        => directory,
         recurse       => false,
@@ -217,21 +178,32 @@ class goldengate_11g {
         mode          => 0775,
         group         => hiera('oracle_os_group'),
       }
-      
-      exec { "install oracle goldengate":
-          command     => "/bin/sh -c 'unset DISPLAY;${installDir}/${ggateInstallDir}/fbo_ggs_Linux_x64_shiphome/Disk1/runInstaller -silent -waitforcompletion -responseFile ${installDir}/oggcore.rsp'",
-          require     => [ File["${installDir}/oggcore.rsp"],
-                           File["/oracle/product"],
-                           Exec["extract 121200_fbo_ggs_Linux_x64_shiphome"]
-                         ],
-          creates     => "/oracle/product/12.1.2/ggate",
-          timeout     => 0,
-          path        => "/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin",
-          logoutput   => true,
-          user        => hiera('ggate_os_user'),
-          group       => hiera('oracle_os_group'),
-          returns     => [3,0],
+
+      oradb::goldengate{ 'ggate12.1.2':
+                         version                 => '12.1.2',
+                         file                    => '121200_fbo_ggs_Linux_x64_shiphome.zip',
+                         databaseType            => 'Oracle',
+                         databaseVersion         => 'ORA11g',
+                         databaseHome            => hiera('oracle_home_dir'),
+                         oracleBase              => hiera('oracle_base_dir'),
+                         goldengateHome          => "/oracle/product/12.1.2/ggate",
+                         managerPort             => 16000,
+                         user                    => 'ggate',
+                         group                   => 'dba',
+                         downloadDir             => '/install',
+                         puppetDownloadMntPoint  =>  hiera('oracle_source'),
+                         require                 => File["/oracle/product"],
       }
+
+      file { "/oracle/product/12.1.2/ggate/OPatch" :
+        ensure        => directory,
+        recurse       => true,
+        replace       => false,
+        mode          => 0775,
+        group         => hiera('oracle_os_group'),
+        require       => Oradb::Goldengate['ggate12.1.2'],
+      }
+
 
       # cd /oracle/product/12.1.2/ggate
       # . oraenv

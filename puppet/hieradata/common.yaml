@@ -4,18 +4,20 @@ messageEnv:     'common'
 
 
 hosts:
-  'adminwls':
+  'adminwls.example.com':
     ip:                "10.10.10.10"
-    host_aliases:      - 'adminwls.example.com'
-                       - 'adminwls'
-  'nodewls1':
+    host_aliases:      - 'adminwls'
+  'nodewls1.example.com':
     ip:                "10.10.10.100"
-    host_aliases:      - 'nodewls1.example.com'
-                       - 'nodewls1'
-  'nodewls2':
+    host_aliases:      - 'nodewls1'
+  'nodewls2.example.com':
     ip:                "10.10.10.200"
-    host_aliases:      - 'nodewls2.example.com'
-                       - 'nodewls2'
+    host_aliases:      - 'nodewls2'
+  'localhost':
+    ip:                "127.0.0.1"
+    host_aliases:      - 'localhost.localdomain'
+                       - 'localhost4'
+                       - 'localhost4.localdomain4'
 
 
 # global WebLogic vars
