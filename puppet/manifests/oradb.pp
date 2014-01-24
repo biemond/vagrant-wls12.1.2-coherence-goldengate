@@ -4,7 +4,9 @@ node 'oradb'  {
    include goldengate_11g
    include oradb_11g
    include oradb_maintenance
+   include java, orawls::weblogic
 
+   Class['java'] -> Class['orawls::weblogic'] 
 }
 
 # operating settings for Database & Middleware
@@ -124,6 +126,8 @@ class oradb_11g {
             require      => Oradb::Net['config net8'],
    }
 
+   # alter system set xxx scope= spfile|both 
+   # enable_goldengate_replication=true,undo_management=auto,undo_retention=86400
    oradb::database{ 'oraDb': 
                     oracleBase              => hiera('oracle_base_dir'),
                     oracleHome              => hiera('oracle_home_dir'),
@@ -140,7 +144,7 @@ class oradb_11g {
                     recoveryAreaDestination => "/oracle/flash_recovery_area",
                     characterSet            => "AL32UTF8",
                     nationalCharacterSet    => "UTF8",
-                    initParams              => "open_cursors=1000,processes=600,job_queue_processes=4",
+                    initParams              => "open_cursors=1000,processes=600,job_queue_processes=4,compatible='11.2.0.4'",
                     sampleSchema            => 'TRUE',
                     memoryPercentage        => "40",
                     memoryTotal             => "800",
@@ -176,8 +180,19 @@ class goldengate_11g {
         recurse       => false,
         replace       => false,
         mode          => 0775,
+        owner         => hiera('oracle_os_user'),
         group         => hiera('oracle_os_group'),
       }
+
+      file { "/oracle/product/12.1.2" :
+        ensure        => directory,
+        recurse       => false,
+        replace       => false,
+        mode          => 0775,
+        owner         => 'ggate',
+        group         => hiera('oracle_os_group'),
+      }
+
 
       oradb::goldengate{ 'ggate12.1.2':
                          version                 => '12.1.2',
@@ -188,11 +203,11 @@ class goldengate_11g {
                          oracleBase              => hiera('oracle_base_dir'),
                          goldengateHome          => "/oracle/product/12.1.2/ggate",
                          managerPort             => 16000,
-                         user                    => 'ggate',
-                         group                   => 'dba',
+                         user                    => hiera('ggate_os_user'),
+                         group                   => hiera('oracle_os_group'),
                          downloadDir             => '/install',
                          puppetDownloadMntPoint  =>  hiera('oracle_source'),
-                         require                 => File["/oracle/product"],
+                         require                 => [File["/oracle/product"],File["/oracle/product/12.1.2"]]
       }
 
       file { "/oracle/product/12.1.2/ggate/OPatch" :
@@ -200,17 +215,12 @@ class goldengate_11g {
         recurse       => true,
         replace       => false,
         mode          => 0775,
+        owner         => hiera('ggate_os_user'),
         group         => hiera('oracle_os_group'),
         require       => Oradb::Goldengate['ggate12.1.2'],
       }
 
 
-      # cd /oracle/product/12.1.2/ggate
-      # . oraenv
-      # test
-      # ./ggsci
-      # info all
-      # 
 
 }
 
@@ -245,3 +255,28 @@ class oradb_maintenance {
 
 }
 
+
+class java {
+  require oradb_os
+
+  notify { 'class java':} 
+
+  $remove = [ "java-1.7.0-openjdk.x86_64", "java-1.6.0-openjdk.x86_64" ]
+
+  package { $remove:
+    ensure  => absent,
+  }
+
+  include jdk7
+
+  jdk7::install7{ 'jdk1.7.0_45':
+      version              => "7u45" , 
+      fullVersion          => "jdk1.7.0_45",
+      alternativesPriority => 18000, 
+      x64                  => true,
+      downloadDir          => "/install",
+      urandomJavaFix       => true,
+      sourcePath           => "/software",
+  }
+
+}

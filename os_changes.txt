@@ -1,0 +1,10 @@
+
+
+# archive dir
+su - oracle
+mkdir -p /oracle/archives/test
+
+
+# allow oracle user to generate spool files
+su - ggate
+chmod 775 /oracle/product/12.1.2/ggate

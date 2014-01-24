@@ -1,0 +1,84 @@
+# db 
+
+
+su - oracle
+
+
+# cd for SQL scripts
+cd /oracle/product/12.1.2/ggate/
+
+export ORAENV_ASK=NO;
+export ORACLE_SID=test;
+. oraenv
+
+sqlplus /nolog
+connect / as sysdba
+
+
+SHUTDOWN IMMEDIATE;
+STARTUP MOUNT;
+ALTER DATABASE ARCHIVELOG;
+ALTER DATABASE OPEN;
+
+alter system set log_archive_dest_1='LOCATION=/oracle/archives/test' scope=both;
+alter system set ENABLE_GOLDENGATE_REPLICATION=true scope=both; 
+alter system set undo_retention=86400 scope=both; 
+
+
+// check
+SELECT supplemental_log_data_min, force_logging FROM v$database;
+
+ALTER DATABASE ADD SUPPLEMENTAL LOG DATA;
+ALTER DATABASE FORCE LOGGING;
+
+ALTER SYSTEM SWITCH LOGFILE;
+
+alter user hr account unlock;
+alter user hr identified by hr;
+
+
+create tablespace ggate
+  logging
+  datafile '/oracle/oradata/test/ggate01.dbf' 
+  size 32m 
+  autoextend on 
+  next 32m maxsize 2048m
+  extent management local;
+
+CREATE USER GGATE_ADMIN identified by GGATE_ADMIN
+DEFAULT TABLESPACE ggate
+TEMPORARY TABLESPACE temp
+QUOTA UNLIMITED ON GGATE;
+
+GRANT CREATE SESSION, ALTER SESSION to GGATE_ADMIN;
+GRANT ALTER SYSTEM TO GGATE_ADMIN;
+GRANT CONNECT, RESOURCE to GGATE_ADMIN;
+GRANT SELECT ANY DICTIONARY to GGATE_ADMIN;
+GRANT FLASHBACK ANY TABLE to GGATE_ADMIN;
+#GRANT SELECT ANY TABLE TO GGATE_ADMIN;
+GRANT SELECT ON DBA_CLUSTERS TO GGATE_ADMIN;
+GRANT EXECUTE ON DBMS_FLASHBACK TO GGATE_ADMIN;
+GRANT SELECT ANY TRANSACTION To GGATE_ADMIN;
+GRANT SELECT ON SYS.V_$DATABASE TO GGATE_ADMIN;
+EXEC DBMS_GOLDENGATE_AUTH.GRANT_ADMIN_PRIVILEGE('GGATE_ADMIN');
+/
+
+GRANT FLASHBACK ANY TABLE TO GGATE_ADMIN;
+
+GRANT SELECT ON HR.REGIONS to GGATE_ADMIN;
+GRANT SELECT ON HR.DEPARTMENTS to GGATE_ADMIN;
+GRANT SELECT ON HR.JOBS to GGATE_ADMIN;
+GRANT SELECT ON HR.EMPLOYEES to GGATE_ADMIN;
+GRANT SELECT ON HR.JOB_HISTORY to GGATE_ADMIN;
+GRANT SELECT ON HR.COUNTRIES to GGATE_ADMIN;
+GRANT SELECT ON HR.LOCATIONS to GGATE_ADMIN;
+
+@marker_setup.sql
+@ddl_setup.sql
+@role_setup.sql
+GRANT GGS_GGSUSER_ROLE TO GGATE_ADMIN;
+@ddl_enable
+
+
+
+
