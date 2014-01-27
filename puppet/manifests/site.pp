@@ -8,10 +8,12 @@ node 'adminwls.example.com' {
   
   include os, ssh, java
   include orawls::weblogic, orautils
-  #include opatch
   include domains, nodemanager, startwls, userconfig
   include machines
   #, datasources
+  include server_templates
+  include cluster
+  include coherence
   include pack_domain
 
   Class[java] -> Class[orawls::weblogic]
@@ -174,18 +176,8 @@ class java {
 }
 
 
-# class opatch{
-#   require orawls::weblogic
-
-#   notice 'class opatch'
-#   $default_params = {}
-#   $opatch_instances = hiera('opatch_instances', [])
-#   create_resources('orawls::opatch',$opatch_instances, $default_params)
-# }
-
 class domains{
   require orawls::weblogic
-  #, opatch
 
   notice 'class domains'
   $default_params = {}
@@ -238,9 +230,40 @@ class machines{
 #  create_resources('orawls::wlstexec',$datasource_instances, $default_params)
 #}
 
-class pack_domain{
-#  require datasources
+
+class server_templates{
   require machines
+
+  notify { 'class server_templates':} 
+  $default_params = {}
+  $server_templates_instances = hiera('server_templates_instances', [])
+  create_resources('orawls::wlstexec',$server_templates_instances, $default_params)
+}
+
+
+
+class cluster{
+   require server_templates
+
+  notify { 'class cluster_instances':} 
+  $default_params = {}
+  $cluster_instances = hiera('cluster_instances', [])
+  create_resources('orawls::wlstexec',$cluster_instances, $default_params)
+
+}
+
+class coherence{
+   require cluster
+
+  notify { 'class coherence_instances':} 
+  $default_params = {}
+  $coherence_instances = hiera('coherence_instances', [])
+  create_resources('orawls::wlstexec',$coherence_instances, $default_params)
+
+}
+
+class pack_domain{
+  require coherence
 
   notify { 'class pack_domain':} 
   $default_params = {}

@@ -1,0 +1,85 @@
+
+
+
+# log in as ggate
+su - ggate
+
+# change to ggate home 
+cd /oracle/product/12.1.2/ggate/
+
+# set DB
+export ORAENV_ASK=NO;
+export ORACLE_SID=test;
+. oraenv
+
+
+./ggsci < /vagrant/setup.ggcsi
+
+
+# mgr
+status mgr
+stop mgr
+
+EDIT PARAMS MGR
+-----
+PORT 16000
+AUTOSTART ER *
+AUTORESTART ER *, RETRIES 4, WAITMINUTES 4
+----
+
+start mgr
+status mgr
+
+#Classic Capture Extract
+# oracle/product/12.1.2/ggate/dirprm/hrtest.prm
+EDIT PARAMS HRTEST
+
+
+# for Java Hot Cache and capture DDL changes
+# backward compat
+---
+EXTRACT HRTEST
+USERIDALIAS gg1
+LOGALLSUPCOLS
+UPDATERECORDFORMAT COMPACT
+DDL INCLUDE MAPPED
+ENCRYPTTRAIL AES192
+EXTTRAIL dirdat/st
+SEQUENCE hr.*;
+TABLE hr.*;
+BR BROFF
+getUpdateBefores
+TranLogOptions excludeUser hr
+---
+
+
+./ggsci < /vagrant/hrtest.ggcsi
+
+
+# check log files /oracle/product/12.1.2/ggate/dirrpt/HRTEST.rpt
+
+# datapump to oracle java adapter
+EDIT PARAMS PJAVA
+----
+EXTRACT PJAVA
+RMTHOST oradb, MGRPORT 15000, COMPRESS
+RMTTRAIL dirdat/jj
+PASSTHRU
+REPORTCOUNT EVERY 10 MINUTES, RATE
+GETUPDATEBEFORES
+TABLE hr.*;
+----
+
+ADD EXTRACT PJAVA, EXTTRAILSOURCE dirdat/st
+ADD RMTTRAIL dirdat/jj, EXTRACT PJAVA, megabytes 100
+
+START EXTRACT PJAVA
+
+
+
+# generate table definit
+./defgen paramfile /vagrant/hrdefgen.prm
+cp /oracle/product/12.1.2/ggate/dirdef/hr.def /oracle/product/11.2.1/ggate_java/dirdef/hr.def
+
+
+

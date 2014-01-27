@@ -220,6 +220,27 @@ class goldengate_11g {
         require       => Oradb::Goldengate['ggate12.1.2'],
       }
 
+      file { "/oracle/product/11.2.1" :
+        ensure        => directory,
+        recurse       => false,
+        replace       => false,
+        mode          => 0775,
+        owner         => 'ggate',
+        group         => hiera('oracle_os_group'),
+      }
+
+      oradb::goldengate{ 'ggate11.2.1_java':
+                         version                 => '11.2.1',
+                         file                    => 'V38714-01.zip',
+                         tarFile                 => 'ggs_Adapters_Linux_x64.tar',
+                         goldengateHome          => "/oracle/product/11.2.1/ggate_java",
+                         user                    => hiera('ggate_os_user'),
+                         group                   => hiera('oracle_os_group'),
+                         downloadDir             => '/install',
+                         puppetDownloadMntPoint  =>  hiera('oracle_source'),
+                         require                 => [File["/oracle/product"],File["/oracle/product/11.2.1"]]
+      }
+
 
 
 }

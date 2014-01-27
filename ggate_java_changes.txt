@@ -1,0 +1,60 @@
+
+su - vagrant
+
+mkdir -p /vagrant/hr
+mkdir -p /vagrant/hr/bin
+
+
+
+# log in as ggate
+su - ggate
+
+# change to ggate home 
+cd /oracle/product/11.2.1/ggate_java/
+
+cp /vagrant/hr/dirprm/hr-cgga.properties /oracle/product/11.2.1/ggate_java/dirprm/hr-cgga.properties
+
+
+# set DB
+export ORAENV_ASK=NO;
+export ORACLE_SID=test;
+. oraenv
+
+export JAVA_HOME=/usr/java/jdk1.7.0_45
+export PATH=${JAVA_HOME}/bin:${PATH}
+export LD_LIBRARY_PATH=${JAVA_HOME}/jre/lib/amd64/server:${LD_LIBRARY_PATH}
+
+
+./ggsci
+
+CREATE SUBDIRS
+
+# mgr
+status mgr
+stop mgr
+
+EDIT PARAMS MGR
+-----
+PORT 15000
+AUTOSTART ER *
+AUTORESTART ER *, RETRIES 4, WAITMINUTES 4
+----
+
+start mgr
+status mgr
+
+EDIT PARAMS HR-CGGA
+----
+EXTRACT HR-CGGA
+SETENV ( GGS_USEREXIT_CONF     = "dirprm/hr-cgga.properties" )
+SETENV ( GGS_JAVAUSEREXIT_CONF = "dirprm/hr-cgga.properties")
+SOURCEDEFS dirdef/hr.def
+CUserExit libggjava_ue.so CUSEREXIT PassThru IncludeUpdateBefores
+GETUPDATEBEFORES
+NoTcpSourceTimer
+Table hr.*;
+----
+
+ADD EXTRACT HR-CGGA, EXTTRAILSOURCE dirdat/jm
+
+./extract pf dirprm/hr-cgga.prm

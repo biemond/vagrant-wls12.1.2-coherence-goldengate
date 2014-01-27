@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+<!DOCTYPE cache-config SYSTEM "cache-config.dtd">
+<cache-config>
+  <caching-scheme-mapping>
+    <cache-mapping>
+      <cache-name>Employee</cache-name>
+      <scheme-name>remote</scheme-name>
+    </cache-mapping>
+    <cache-mapping>
+      <cache-name>Department</cache-name>
+      <scheme-name>remote</scheme-name>
+    </cache-mapping>
+  </caching-scheme-mapping>
+
+  <caching-schemes>
+    <remote-cache-scheme>
+      <scheme-name>remote</scheme-name>
+      <service-name>ExtendTcpCacheService</service-name>
+      <initiator-config>
+        <connect-timeout>10s</connect-timeout>
+        <tcp-initiator>
+          <remote-addresses>
+            <socket-address>
+              <address>10.10.10.200</address>
+              <port>9099</port>
+            </socket-address>
+            <socket-address>
+               <address>10.10.10.100</address>
+               <port>9099</port>
+            </socket-address>
+          </remote-addresses>
+        </tcp-initiator>
+        <outgoing-message-handler>
+           <request-timeout>5s</request-timeout>
+           <heartbeat-interval>500ms</heartbeat-interval>
+           <heartbeat-timeout>5s</heartbeat-timeout>
+        </outgoing-message-handler>
+      </initiator-config>
+    </remote-cache-scheme>
+
+  </caching-schemes>
+</cache-config>

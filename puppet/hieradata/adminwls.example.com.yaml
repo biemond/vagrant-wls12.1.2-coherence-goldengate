@@ -71,3 +71,45 @@ machines_instances:
         - "machineDnsName   = '10.10.10.200'"
 
 datasource_instances:
+
+server_templates_instances:
+  'createServerTemplateCoherence':
+     log_output:           *logoutput
+     weblogic_type:        "server_templates"
+     weblogic_object_name: "serverTemplateCoherence"
+     script:               'createServerTemplateCluster.py'
+     params:
+        - "server_template_name          = 'serverTemplateCoherence'"
+        - "server_template_listen_port   = 7200"
+        - "dynamic_server_name_arguments ='-XX:PermSize=128m -XX:MaxPermSize=256m -Xms512m -Xmx1024m'"
+
+cluster_instances:
+    'createDynamicClusterCoherence':
+     log_output:           *logoutput
+     weblogic_type:        "cluster"
+     weblogic_object_name: "dynamicClusterCoherence"
+     script:               'createDynamicCluster.py'
+     params:
+        - "server_template_name       = 'serverTemplateCoherence'"
+        - "dynamic_cluster_name       = 'dynamicClusterCoherence'"
+        - "dynamic_nodemanager_match  = 'Node1,Node2'"
+        - "dynamic_server_name_prefix = 'dynamic_coherence_server_'"
+
+coherence_instances:
+    'createClusterCoherence':
+     log_output:           *logoutput
+     weblogic_type:        "coherence"
+     weblogic_object_name: "clusterCoherence"
+     script:               'createCoherenceCluster.py'
+     params:
+       - "coherence_cluster_name = 'clusterCoherence'"
+       - "target                 = 'dynamicClusterCoherence'"
+       - "targetType             = 'Cluster'"
+       - "storage_enabled        = true"
+       - "unicast_address        = '10.10.10.100,10.10.10.200'"
+       - "unicast_port           = 9099"
+       - "multicast_address      = '231.1.1.1'"
+       - "multicast_port         = 33387"
+       - "machines               = ['Node1','Node2']"
+ 
+

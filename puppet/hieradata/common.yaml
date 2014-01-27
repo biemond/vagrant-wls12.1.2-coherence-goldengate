@@ -52,12 +52,6 @@ orawls::weblogic::download_dir:         *wls_download_dir
 orawls::weblogic::source:               *wls_source
 orawls::weblogic::remote_file:          false
 
-opatch_instances:
-  '16175470':
-     oracle_product_home_dir:  "/opt/oracle/middleware12c"
-     patch_id:                 "16175470"
-     patch_file:               "p16175470_121200_Generic.zip"
-     remote_file:              false
 
 # handy WebLogic scripts in /opt/scripts/wls
 orautils::osOracleHomeParam:      *wls_oracle_base_home_dir
