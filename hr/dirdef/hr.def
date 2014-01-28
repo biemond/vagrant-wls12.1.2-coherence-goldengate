@@ -1,0 +1,130 @@
+*+- Defgen version 2.0, Encoding UTF-8
+*
+* Definitions created/modified  2014-01-28 13:07
+*
+*  Field descriptions for each column entry:
+*
+*     1    Name
+*     2    Data Type
+*     3    External Length
+*     4    Fetch Offset
+*     5    Scale
+*     6    Level
+*     7    Null
+*     8    Bump if Odd
+*     9    Internal Length
+*    10    Binary Length
+*    11    Table Length
+*    12    Most Significant DT
+*    13    Least Significant DT
+*    14    High Precision
+*    15    Low Precision
+*    16    Elementary Item
+*    17    Occurs
+*    18    Key Column
+*    19    Sub Data Type
+*
+Database type: ORACLE
+Character set ID: UTF-8
+National character set ID: CESU-8
+Locale: neutral
+Case sensitivity: 14 14 14 14 14 14 14 14 14 14 14 14 11 14 14 14
+*
+Definition for table HR.COUNTRIES
+Record length: 108
+Syskey: 0
+Columns: 3
+COUNTRY_ID      0      2        0  0  0 1 0      2      2      0 0 0 0 0 1    0 1   0
+COUNTRY_NAME   64     40        6  0  0 1 0     40     40      0 0 0 0 0 1    0 0   0
+REGION_ID      64     50       52  0  0 1 0     50     50     50 0 0 0 0 1    0 0   2
+End of definition
+*
+Definition for table HR.DEPARTMENTS
+Record length: 72
+Syskey: 0
+Columns: 4
+DEPARTMENT_ID    134      8        0  0  0 1 0      8      8      8 0 0 0 0 1    0 1   3
+DEPARTMENT_NAME   64     30       12  0  0 1 0     30     30      0 0 0 0 0 1    0 0   0
+MANAGER_ID       134      8       48  0  0 1 0      8      8      8 0 0 0 0 1    0 0   3
+LOCATION_ID      134      8       60  0  0 1 0      8      8      8 0 0 0 0 1    0 0   3
+End of definition
+*
+Definition for table HR.EMPLOYEES
+Record length: 210
+Syskey: 0
+Columns: 11
+EMPLOYEE_ID     134      8        0  0  0 1 0      8      8      8 0 0 0 0 1    0 1   3
+FIRST_NAME       64     20       12  0  0 1 0     20     20      0 0 0 0 0 1    0 0   0
+LAST_NAME        64     25       38  0  0 1 0     25     25      0 0 0 0 0 1    0 0   0
+EMAIL            64     25       68  0  0 1 0     25     25      0 0 0 0 0 1    0 0   0
+PHONE_NUMBER     64     20       98  0  0 1 0     20     20      0 0 0 0 0 1    0 0   0
+HIRE_DATE       192     19      124  0  0 1 0     19     19     19 0 5 0 0 1    0 0   0
+JOB_ID           64     10      146  0  0 1 0     10     10      0 0 0 0 0 1    0 0   0
+SALARY          134     10      162  2  0 1 0      8      8      8 0 0 0 0 1    0 0   3
+COMMISSION_PCT  134      8      174  2  0 1 0      8      8      8 0 0 0 0 1    0 0   3
+MANAGER_ID      134      8      186  0  0 1 0      8      8      8 0 0 0 0 1    0 0   3
+DEPARTMENT_ID   134      8      198  0  0 1 0      8      8      8 0 0 0 0 1    0 0   3
+End of definition
+*
+Definition for table HR.EMP_DETAILS_VIEW
+Record length: 368
+Syskey: 0
+Columns: 16
+EMPLOYEE_ID      134      8        0  0  0 1 0      8      8      8 0 0 0 0 1    0 1   3
+JOB_ID            64     10       12  0  0 1 0     10     10      0 0 0 0 0 1    0 1   0
+MANAGER_ID       134      8       28  0  0 1 0      8      8      8 0 0 0 0 1    0 1   3
+DEPARTMENT_ID    134      8       40  0  0 1 0      8      8      8 0 0 0 0 1    0 1   3
+LOCATION_ID      134      8       52  0  0 1 0      8      8      8 0 0 0 0 1    0 1   3
+COUNTRY_ID         0      2       64  0  0 1 0      2      2      0 0 0 0 0 1    0 1   0
+FIRST_NAME        64     20       70  0  0 1 0     20     20      0 0 0 0 0 1    0 1   0
+LAST_NAME         64     25       96  0  0 1 0     25     25      0 0 0 0 0 1    0 1   0
+SALARY           134     10      126  2  0 1 0      8      8      8 0 0 0 0 1    0 1   3
+COMMISSION_PCT   134      8      138  2  0 1 0      8      8      8 0 0 0 0 1    0 1   3
+DEPARTMENT_NAME   64     30      150  0  0 1 0     30     30      0 0 0 0 0 1    0 1   0
+JOB_TITLE         64     35      186  0  0 1 0     35     35      0 0 0 0 0 1    0 1   0
+CITY              64     30      226  0  0 1 0     30     30      0 0 0 0 0 1    0 1   0
+STATE_PROVINCE    64     25      262  0  0 1 0     25     25      0 0 0 0 0 1    0 1   0
+COUNTRY_NAME      64     40      292  0  0 1 0     40     40      0 0 0 0 0 1    0 1   0
+REGION_NAME       64     25      338  0  0 1 0     25     25      0 0 0 0 0 1    0 1   0
+End of definition
+*
+Definition for table HR.JOBS
+Record length: 80
+Syskey: 0
+Columns: 4
+JOB_ID       64     10        0  0  0 1 0     10     10      0 0 0 0 0 1    0 1   0
+JOB_TITLE    64     35       16  0  0 1 0     35     35      0 0 0 0 0 1    0 0   0
+MIN_SALARY  134      8       56  0  0 1 0      8      8      8 0 0 0 0 1    0 0   3
+MAX_SALARY  134      8       68  0  0 1 0      8      8      8 0 0 0 0 1    0 0   3
+End of definition
+*
+Definition for table HR.JOB_HISTORY
+Record length: 84
+Syskey: 0
+Columns: 5
+EMPLOYEE_ID    134      8        0  0  0 1 0      8      8      8 0 0 0 0 1    0 1   3
+START_DATE     192     19       12  0  0 1 0     19     19     19 0 5 0 0 1    0 1   0
+END_DATE       192     19       34  0  0 1 0     19     19     19 0 5 0 0 1    0 0   0
+JOB_ID          64     10       56  0  0 1 0     10     10      0 0 0 0 0 1    0 0   0
+DEPARTMENT_ID  134      8       72  0  0 1 0      8      8      8 0 0 0 0 1    0 0   3
+End of definition
+*
+Definition for table HR.LOCATIONS
+Record length: 148
+Syskey: 0
+Columns: 6
+LOCATION_ID     134      8        0  0  0 1 0      8      8      8 0 0 0 0 1    0 1   3
+STREET_ADDRESS   64     40       12  0  0 1 0     40     40      0 0 0 0 0 1    0 0   0
+POSTAL_CODE      64     12       58  0  0 1 0     12     12      0 0 0 0 0 1    0 0   0
+CITY             64     30       76  0  0 1 0     30     30      0 0 0 0 0 1    0 0   0
+STATE_PROVINCE   64     25      112  0  0 1 0     25     25      0 0 0 0 0 1    0 0   0
+COUNTRY_ID        0      2      142  0  0 1 0      2      2      0 0 0 0 0 1    0 0   0
+End of definition
+*
+Definition for table HR.REGIONS
+Record length: 86
+Syskey: 0
+Columns: 2
+REGION_ID     64     50        0  0  0 1 0     50     50     50 0 0 0 0 1    0 1   2
+REGION_NAME   64     25       56  0  0 1 0     25     25      0 0 0 0 0 1    0 0   0
+End of definition

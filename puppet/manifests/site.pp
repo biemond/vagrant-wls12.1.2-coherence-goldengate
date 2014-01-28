@@ -15,6 +15,8 @@ node 'adminwls.example.com' {
   include cluster
   include coherence
   include pack_domain
+  include goldengate_11g
+
 
   Class[java] -> Class[orawls::weblogic]
 }  
@@ -70,6 +72,19 @@ class os {
     managehome => true,
     require    => Group['dba'],
   }
+
+  user { 'ggate' :
+    ensure      => present,
+    gid         => 'dba',  
+    groups      => 'dba',
+    shell       => '/bin/bash',
+    password    => '$1$DSJ51vh6$4XzzwyIOk6Bi/54kglGk3.',
+    home        => "/home/ggate",
+    comment     => "This user ggate was created by Puppet",
+    require     => Group['dba'],
+    managehome  => true,
+  }
+
 
   $install = [ 'binutils.x86_64','unzip.x86_64']
 
@@ -269,5 +284,31 @@ class pack_domain{
   $default_params = {}
   $pack_domain_instances = hiera('pack_domain_instances', $default_params)
   create_resources('orawls::packdomain',$pack_domain_instances, $default_params)
+}
+
+class goldengate_11g {
+   require orawls::weblogic
+
+      file { "/opt/oracle" :
+        ensure        => directory,
+        recurse       => false,
+        replace       => false,
+        mode          => 0775,
+        owner         => 'oracle',
+        group         => 'dba',
+      }
+
+      oradb::goldengate{ 'ggate11.2.1_java':
+                         version                 => '11.2.1',
+                         file                    => 'V38714-01.zip',
+                         tarFile                 => 'ggs_Adapters_Linux_x64.tar',
+                         goldengateHome          => "/opt/oracle/ggate_java",
+                         user                    => 'ggate',
+                         group                   => 'dba',
+                         downloadDir             => '/data/install',
+                         puppetDownloadMntPoint  => '/software',
+                         require                 => File["/opt/oracle"],
+      }
+
 }
 

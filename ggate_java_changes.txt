@@ -1,9 +1,4 @@
 
-su - vagrant
-
-mkdir -p /vagrant/hr
-mkdir -p /vagrant/hr/bin
-
 
 
 # log in as ggate
@@ -12,13 +7,8 @@ su - ggate
 # change to ggate home 
 cd /oracle/product/11.2.1/ggate_java/
 
-cp /vagrant/hr/dirprm/hr-cgga.properties /oracle/product/11.2.1/ggate_java/dirprm/hr-cgga.properties
+cp /vagrant/hr/dirprm/hr-cgga.properties /opt/oracle/ggate_java/dirprm/hr-cgga.properties
 
-
-# set DB
-export ORAENV_ASK=NO;
-export ORACLE_SID=test;
-. oraenv
 
 export JAVA_HOME=/usr/java/jdk1.7.0_45
 export PATH=${JAVA_HOME}/bin:${PATH}
@@ -57,5 +47,7 @@ Table hr.*;
 ----
 
 ADD EXTRACT HR-CGGA, EXTTRAILSOURCE dirdat/jm
+
+cp  /vagrant/hr/dirdef/hr.def /opt/oracle/ggate_java/dirdef/hr.def
 
 #./extract pf dirprm/hr-cgga.prm
