@@ -21,7 +21,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     admin.vm.network :private_network, ip: "10.10.10.10"
   
     admin.vm.provider :virtualbox do |vb|
-      vb.customize ["modifyvm", :id, "--memory", "2048"]
+      vb.customize ["modifyvm", :id, "--memory", "1200"]
       vb.customize ["modifyvm", :id, "--name", "adminwls"]
     end
   
@@ -59,7 +59,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     node1.vm.network :private_network, ip: "10.10.10.100"
   
     node1.vm.provider :virtualbox do |vb|
-      vb.customize ["modifyvm", :id, "--memory", "1532"]
+      vb.customize ["modifyvm", :id, "--memory", "1024"]
       vb.customize ["modifyvm", :id, "--name", "nodewls1"]
     end
   
@@ -96,7 +96,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     node2.vm.network :private_network, ip: "10.10.10.200", auto_correct: true
   
     node2.vm.provider :virtualbox do |vb|
-      vb.customize ["modifyvm", :id, "--memory", "1532"]
+      vb.customize ["modifyvm", :id, "--memory", "1024"]
       vb.customize ["modifyvm", :id, "--name", "nodewls2"]
     end
   

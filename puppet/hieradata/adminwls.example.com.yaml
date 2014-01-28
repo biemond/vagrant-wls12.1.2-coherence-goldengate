@@ -81,7 +81,7 @@ server_templates_instances:
      params:
         - "server_template_name          = 'serverTemplateCoherence'"
         - "server_template_listen_port   = 7200"
-        - "dynamic_server_name_arguments ='-XX:PermSize=128m -XX:MaxPermSize=256m -Xms512m -Xmx1024m'"
+        - "dynamic_server_name_arguments ='-XX:PermSize=128m -XX:MaxPermSize=256m -Xms512m -Xmx752m'"
 
 cluster_instances:
     'createDynamicClusterCoherence':
@@ -110,6 +110,6 @@ coherence_instances:
        - "unicast_port           = 9099"
        - "multicast_address      = '231.1.1.1'"
        - "multicast_port         = 33387"
-       - "machines               = ['Node1','Node2']"
+       - "machines               = ['10.10.10.100','10.10.10.200']"
  
 
