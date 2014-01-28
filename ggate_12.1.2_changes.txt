@@ -14,6 +14,8 @@ export ORACLE_SID=test;
 
 
 ./ggsci < /vagrant/setup.ggcsi
+or 
+create subdirs
 
 
 # mgr
@@ -23,9 +25,25 @@ stop mgr
 EDIT PARAMS MGR
 -----
 PORT 16000
+DYNAMICPORTLIST 16010-16020, 16030
 AUTOSTART ER *
 AUTORESTART ER *, RETRIES 4, WAITMINUTES 4
+STARTUPVALIDATIONDELAY 5
+USERIDALIAS gg1
+PURGEOLDEXTRACTS dirdat/*, USECHECKPOINTS, MINKEEPHOURS 2
 ----
+
+-----
+PORT 16000
+DYNAMICPORTLIST 16010-16020, 16030
+AUTOSTART ER *
+AUTORESTART ER *, RETRIES 4, WAITMINUTES 4
+STARTUPVALIDATIONDELAY 5
+USERID GGATE_ADMIN, PASSWORD GGATE_ADMIN
+PURGEOLDEXTRACTS dirdat/*, USECHECKPOINTS, MINKEEPHOURS 2
+----
+
+
 
 start mgr
 status mgr
@@ -52,8 +70,43 @@ getUpdateBefores
 TranLogOptions excludeUser hr
 ---
 
+---
+EXTRACT HRTEST
+USERIDALIAS gg1
+RecoveryOptions OverwriteMode
+EXTTRAIL dirdat/st
+BR BROFF
+getUpdateBefores
+TABLE hr.*;
+TranLogOptions excludeUser hr
+---
+
+---
+EXTRACT HRTEST
+USERID GGATE_ADMIN, PASSWORD GGATE_ADMIN
+RecoveryOptions OverwriteMode
+EXTTRAIL dirdat/st
+BR BROFF
+getUpdateBefores
+TABLE hr.*;
+TranLogOptions excludeUser hr
+---
+
+
 
 ./ggsci < /vagrant/hrtest.ggcsi
+
+or 
+
+START MGR
+DBLOGIN USERID GGATE_ADMIN, PASSWORD GGATE_ADMIN
+STOP EXTRACT HRTEST
+DELETE EXTRACT HRTEST
+ADD SCHEMATRANDATA hr
+ADD EXTRACT HRTEST, TRANLOG, BEGIN NOW
+SHELL rm -f dirdat/st*
+ADD EXTTRAIL dirdat/st, EXTRACT HRTEST
+start HRTEST
 
 
 # check log files /oracle/product/12.1.2/ggate/dirrpt/HRTEST.rpt
@@ -62,17 +115,37 @@ TranLogOptions excludeUser hr
 EDIT PARAMS PJAVA
 ----
 EXTRACT PJAVA
-RMTHOST oradb, MGRPORT 15000, COMPRESS
+DBLOGIN USERIDALIAS gg1
+RMTHOST oradb, PORT 16100
 RMTTRAIL dirdat/jj
 PASSTHRU
-REPORTCOUNT EVERY 10 MINUTES, RATE
 GETUPDATEBEFORES
 TABLE hr.*;
 ----
 
+----
+EXTRACT PJAVA
+USERID GGATE_ADMIN, PASSWORD GGATE_ADMIN
+RMTHOST 10.10.10.5, PORT 16100
+RMTTRAIL dirdat/jj
+PASSTHRU
+GETUPDATEBEFORES
+TABLE hr.*;
+----
+
+
+DBLOGIN USERIDALIAS gg1
+STOP EXTRACT PJAVA
+DELETE EXTRACT PJAVA
 ADD EXTRACT PJAVA, EXTTRAILSOURCE dirdat/st
 ADD RMTTRAIL dirdat/jj, EXTRACT PJAVA, megabytes 100
+START EXTRACT PJAVA
 
+DBLOGIN USERID GGATE_ADMIN, PASSWORD GGATE_ADMIN
+STOP EXTRACT PJAVA
+DELETE EXTRACT PJAVA
+ADD EXTRACT PJAVA, EXTTRAILSOURCE dirdat/st
+ADD RMTTRAIL dirdat/jj, EXTRACT PJAVA, megabytes 100
 START EXTRACT PJAVA
 
 
@@ -81,5 +154,6 @@ START EXTRACT PJAVA
 ./defgen paramfile /vagrant/hrdefgen.prm
 cp /oracle/product/12.1.2/ggate/dirdef/hr.def /oracle/product/11.2.1/ggate_java/dirdef/hr.def
 
-
+update hr.departments set department_name = 'Administration8' where department_id = 10;
+commit;
 

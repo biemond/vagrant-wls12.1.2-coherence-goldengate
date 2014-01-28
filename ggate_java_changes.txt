@@ -35,7 +35,8 @@ stop mgr
 
 EDIT PARAMS MGR
 -----
-PORT 15000
+PORT 16100
+DYNAMICPORTLIST 16110-16120, 16130
 AUTOSTART ER *
 AUTORESTART ER *, RETRIES 4, WAITMINUTES 4
 ----
@@ -57,4 +58,4 @@ Table hr.*;
 
 ADD EXTRACT HR-CGGA, EXTTRAILSOURCE dirdat/jm
 
-./extract pf dirprm/hr-cgga.prm
+#./extract pf dirprm/hr-cgga.prm
