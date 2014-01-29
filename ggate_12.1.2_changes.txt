@@ -11,7 +11,7 @@ export ORACLE_SID=test;
 
 ./ggsci < /vagrant/setup.ggcsi
 
-
+./ggsci
 # mgr
 status mgr
 stop mgr
@@ -52,10 +52,16 @@ getUpdateBefores
 TranLogOptions excludeUser hr
 ---
 
+exit
 ./ggsci < /vagrant/hrtest.ggcsi
 
 
 # check log files /oracle/product/12.1.2/ggate/dirrpt/HRTEST.rpt
+
+./ggsci
+
+info all
+
 
 # datapump to oracle java adapter
 EDIT PARAMS PJAVA
@@ -83,6 +89,6 @@ START EXTRACT PJAVA
 ./defgen paramfile /vagrant/hrdefgen.prm
 cp /oracle/product/12.1.2/ggate/dirdef/hr.def /vagrant/hr/dirdef/hr.def
 
-update hr.departments set department_name = 'Administration3' where department_id = 10;
+update hr.departments set department_name = 'Administration4' where department_id = 10;
 commit;
 

@@ -289,15 +289,6 @@ class pack_domain{
 class goldengate_11g {
    require orawls::weblogic
 
-      file { "/opt/oracle" :
-        ensure        => directory,
-        recurse       => false,
-        replace       => false,
-        mode          => 0775,
-        owner         => 'oracle',
-        group         => 'dba',
-      }
-
       oradb::goldengate{ 'ggate11.2.1_java':
                          version                 => '11.2.1',
                          file                    => 'V38714-01.zip',

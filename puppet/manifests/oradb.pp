@@ -4,10 +4,8 @@ node 'oradb'  {
    include goldengate_11g
    include oradb_11g
    include oradb_maintenance
-   include java, orawls::weblogic
-
-   Class['java'] -> Class['orawls::weblogic'] 
-}
+ 
+} 
 
 # operating settings for Database & Middleware
 class oradb_os {
@@ -281,28 +279,3 @@ class oradb_maintenance {
 
 }
 
-
-class java {
-  require oradb_os
-
-  notify { 'class java':} 
-
-  $remove = [ "java-1.7.0-openjdk.x86_64", "java-1.6.0-openjdk.x86_64" ]
-
-  package { $remove:
-    ensure  => absent,
-  }
-
-  include jdk7
-
-  jdk7::install7{ 'jdk1.7.0_45':
-      version              => "7u45" , 
-      fullVersion          => "jdk1.7.0_45",
-      alternativesPriority => 18000, 
-      x64                  => true,
-      downloadDir          => "/install",
-      urandomJavaFix       => true,
-      sourcePath           => "/software",
-  }
-
-}
