@@ -3,6 +3,9 @@ vagrant-wls12.1.2-coherence-goldengate
 
 creates a patched 12.1.2 WebLogic cluster ( oradb, adminwls , nodewls1, nodewls2 )
 
+used the following Coherence HR application build in OEPE 12.1.2 and deployed to the dynnamic cluster
+https://github.com/biemond/Coherence_HotCache
+
 
 JDK
 - jdk-7u45-linux-x64.tar.gz
