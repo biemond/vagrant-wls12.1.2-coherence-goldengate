@@ -4,18 +4,18 @@
   <caching-scheme-mapping>
     <cache-mapping>
       <cache-name>Employee</cache-name>
-      <scheme-name>remote</scheme-name>
+      <scheme-name>CustomRemoteCacheScheme</scheme-name>
     </cache-mapping>
     <cache-mapping>
       <cache-name>Department</cache-name>
-      <scheme-name>remote</scheme-name>
+      <scheme-name>CustomRemoteCacheScheme</scheme-name>
     </cache-mapping>
   </caching-scheme-mapping>
 
   <caching-schemes>
     <remote-cache-scheme>
-      <scheme-name>remote</scheme-name>
-      <service-name>ExtendTcpCacheService</service-name>
+      <scheme-name>CustomRemoteCacheScheme</scheme-name> 
+    <service-name>CustomExtendTcpCacheService</service-name>
       <initiator-config>
         <connect-timeout>10s</connect-timeout>
         <tcp-initiator>

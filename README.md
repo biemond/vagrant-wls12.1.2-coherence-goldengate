@@ -31,10 +31,10 @@ vagrant up oradb
 do the following GoldenGate changes
 - oracle_changes.txt  ( set db in archivemode , goldengate db setup )
 - ggate_12.1.2_changes.txt for GoldenGate Capture
-- ggate_java_changes.txt for Coherence sync
 
 # admin server  
 vagrant up adminwls
+- ggate_java_changes.txt for Coherence sync
 
 # node1  
 vagrant up nodewls1

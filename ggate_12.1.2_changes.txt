@@ -41,10 +41,8 @@ EDIT PARAMS HRTEST
 EXTRACT HRTEST
 USERIDALIAS gg1
 LOGALLSUPCOLS
-UPDATERECORDFORMAT COMPACT
 DDL INCLUDE MAPPED
-ENCRYPTTRAIL AES192
-EXTTRAIL dirdat/st
+EXTTRAIL dirdat/st, FORMAT RELEASE 11.2
 SEQUENCE hr.*;
 TABLE hr.*;
 BR BROFF
@@ -69,12 +67,11 @@ EDIT PARAMS PJAVA
 EXTRACT PJAVA
 USERIDALIAS gg1
 RMTHOST adminwls.example.com, MGRPORT 16100
-RMTTRAIL dirdat/jj
+RMTTRAIL dirdat/jj, FORMAT RELEASE 11.2
 PASSTHRU
 GETUPDATEBEFORES
 TABLE hr.*;
 ----
-
 
 DBLOGIN USERIDALIAS gg1
 STOP EXTRACT PJAVA
@@ -88,7 +85,4 @@ START EXTRACT PJAVA
 # generate table def
 ./defgen paramfile /vagrant/hrdefgen.prm
 cp /oracle/product/12.1.2/ggate/dirdef/hr.def /vagrant/hr/dirdef/hr.def
-
-update hr.departments set department_name = 'Administration4' where department_id = 10;
-commit;
 
