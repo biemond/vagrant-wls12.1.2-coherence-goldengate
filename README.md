@@ -1,9 +1,12 @@
 vagrant-wls12.1.2-coherence-goldengate
 ======================================
 
+Setup for Coherence and Goldengate ( HotCache and JMS publishing )  
+see http://biemond.blogspot.com.au/2014/02/configure-coherence-hotcache.html for information  
+
 creates a patched 12.1.2 WebLogic cluster ( oradb, adminwls , nodewls1, nodewls2 )
 
-used the following Coherence HR application build in OEPE 12.1.2 and deployed to the dynnamic cluster
+used the following Coherence HR application build in OEPE 12.1.2 and deployed to the dynamic cluster
 https://github.com/biemond/Coherence_HotCache
 
 

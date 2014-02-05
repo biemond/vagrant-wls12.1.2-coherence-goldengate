@@ -6,6 +6,8 @@ su - ggate
 
 
 cp /vagrant/hr/dirprm/hr-cgga.properties /opt/oracle/ggate_java/dirprm/hr-cgga.properties
+cp /vagrant/hr/dirprm/hr-oggq.properties /opt/oracle/ggate_java/dirprm/hr-oggq.properties
+
 cp /vagrant/hr/dirdef/hr.def /opt/oracle/ggate_java/dirdef/hr.def
 
 # change to ggate home 
@@ -53,3 +55,20 @@ ADD EXTRACT HR-CGGA, EXTTRAILSOURCE dirdat/jj
 
 
 #./extract pf dirprm/hr-cgga.prm
+
+
+# publish to a JMS Queue 
+
+EDIT PARAMS HR-OGGQ
+----
+EXTRACT HR-OGGQ
+SOURCEDEFS dirdef/hr.def
+CUserExit libggjava_ue.so CUSEREXIT PassThru IncludeUpdateBefores
+GETUPDATEBEFORES
+Table hr.*;
+----
+
+DELETE EXTRACT HR-OGGQ
+ADD EXTRACT HR-OGGQ, EXTTRAILSOURCE dirdat/jj
+
+./extract pf dirprm/hr-oggq.prm
