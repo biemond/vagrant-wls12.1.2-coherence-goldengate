@@ -111,5 +111,84 @@ coherence_instances:
        - "multicast_address      = '231.1.1.1'"
        - "multicast_port         = 33387"
        - "machines               = ['10.10.10.100','10.10.10.200']"
- 
+
+
+jmsservers_instances:
+      'jmsServer':
+         weblogic_object_name: "jmsServer"
+         log_output:           *logoutput
+         weblogic_type:        "jmsserver"
+         script:               'createJmsServer.py'
+         params:
+            - "targetType       = 'Server'"
+            - "target           = 'AdminServer'"
+            - "jmsServerName    = 'jmsServer'"
+
+jmsmodules_instances:
+      'jmsModule':
+         log_output:           *logoutput
+         weblogic_type:        "jmsmodule"
+         script:               'createJmsModule.py'
+         weblogic_object_name: "jmsModule"
+         params:
+            - "jmsModuleName    = 'jmsModule'"
+            - "target           = 'AdminServer'"
+            - "targetType       = 'Server'"
+
+subdeployments_instances:
+      'SubDeploymentWLSforJmsModule':
+         weblogic_object_name: "jmsModule/wlsServers"
+         log_output:           *logoutput
+         weblogic_type:        "jmssubdeployment"
+         script:               'createJmsSubDeployment.py'
+         params:
+            - "target           = 'AdminServer'"
+            - "targetType       = 'Server'"
+            - "subName          = 'wlsServers'"
+            - "jmsModuleName    = 'jmsModule'"
+      'SubDeploymentJMSforJmsModule':
+         weblogic_object_name: "jmsModule/jmsServers"
+         log_output:           *logoutput
+         weblogic_type:        "jmssubdeployment"
+         script:               'createJmsSubDeployment.py'
+         params:
+            - "target           = 'jmsServer'"
+            - "targetType       = 'JMSServer'"
+            - "subName          = 'jmsServers'"
+            - "jmsModuleName    = 'jmsModule'"
+
+queues_instances:
+      'createJmsQueueforJmsModule':
+         weblogic_object_name: "Queue"
+         log_output:           *logoutput
+         weblogic_type:        "jmsobject"
+         script:               'createJmsQueueOrTopic.py'
+         params:
+            - "subDeploymentName = 'jmsServers'"
+            - "jmsModuleName     = 'jmsModule'"
+            - "distributed       = 'true'"
+            - "balancingPolicy   = 'Round-Robin'"
+            - "deliveryDelay     = 2000"
+            - "limit             = 3"
+            - "timeToLive        = 300000"
+            - "jmsType           = 'queue'"
+            - "jmsName           = 'HR-Queue'"
+            - "jmsJNDIName       = 'HR-Queue'"
+            - "useLogRedirect    = 'true'"
+            - "loggingPolicy     = '%header%,%properties%'"
+
+
+cf_instances:
+      'createJmsConnectionFactoryforJmsModule':
+         weblogic_object_name: "HR-CF"
+         log_output:           *logoutput
+         weblogic_type:        "jmsobject"
+         script:               'createJmsConnectionFactory.py'
+         params:
+            - "subDeploymentName = 'wlsServers'"
+            - "jmsModuleName     = 'jmsModule'"
+            - "transacted        = 'false'"
+            - "timeout           = 100000"
+            - "cfName            = 'HR-CF'"
+            - "cfJNDIName        = 'HR-CF'"
 

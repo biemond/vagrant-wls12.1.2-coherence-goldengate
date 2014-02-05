@@ -33,6 +33,9 @@ alter system set log_archive_dest_1='LOCATION=/oracle/archives/test' scope=both;
 alter system set ENABLE_GOLDENGATE_REPLICATION=true scope=both; 
 alter system set undo_retention=86400 scope=both; 
 
+alter user hr account unlock;
+alter user hr identified by hr;
+
 
 // check
 SELECT supplemental_log_data_min, force_logging FROM v$database;
@@ -42,8 +45,6 @@ ALTER DATABASE FORCE LOGGING;
 
 ALTER SYSTEM SWITCH LOGFILE;
 
-alter user hr account unlock;
-alter user hr identified by hr;
 
 
 create tablespace ggate

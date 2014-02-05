@@ -277,8 +277,60 @@ class coherence{
 
 }
 
+class jmsservers{
+   require coherence
+
+  notify { 'class jmsservers_instances':} 
+  $default_params = {}
+  $jmsservers_instances = hiera('jmsservers_instances', [])
+  create_resources('orawls::wlstexec',$jmsservers_instances, $default_params)
+
+}
+
+class jmsmodules{
+   require jmsservers
+
+  notify { 'class jmsmodules_instances':} 
+  $default_params = {}
+  $jmsmodules_instances = hiera('jmsmodules_instances', [])
+  create_resources('orawls::wlstexec',$jmsmodules_instances, $default_params)
+
+}
+
+class subdeployments{
+   require jmsmodules
+
+  notify { 'class subdeployments_instances':} 
+  $default_params = {}
+  $subdeployments_instances = hiera('subdeployments_instances', [])
+  create_resources('orawls::wlstexec',$subdeployments_instances, $default_params)
+
+}
+
+class queues{
+   require subdeployments
+
+  notify { 'class queues_instances':} 
+  $default_params = {}
+  $queues_instances = hiera('queues_instances', [])
+  create_resources('orawls::wlstexec',$queues_instances, $default_params)
+
+}
+
+class cf{
+   require queues
+
+  notify { 'class cf_instances':} 
+  $default_params = {}
+  $cf_instances = hiera('cf_instances', [])
+  create_resources('orawls::wlstexec',$cf_instances, $default_params)
+
+}
+
+
+
 class pack_domain{
-  require coherence
+  require cf
 
   notify { 'class pack_domain':} 
   $default_params = {}
@@ -298,7 +350,6 @@ class goldengate_11g {
                          group                   => 'dba',
                          downloadDir             => '/data/install',
                          puppetDownloadMntPoint  => '/software',
-                         require                 => File["/opt/oracle"],
       }
 
 }

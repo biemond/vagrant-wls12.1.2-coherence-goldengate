@@ -50,6 +50,9 @@ getUpdateBefores
 TranLogOptions excludeUser hr
 ---
 
+
+
+
 exit
 ./ggsci < /vagrant/hrtest.ggcsi
 
