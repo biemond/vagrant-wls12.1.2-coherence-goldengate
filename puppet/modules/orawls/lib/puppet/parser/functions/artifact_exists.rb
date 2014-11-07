@@ -1,139 +1,98 @@
 # restart the puppetmaster when changed
-module Puppet::Parser::Functions
-  newfunction(:artifact_exists, :type => :rvalue) do |args|
+module Puppet
+  module Parser
+    module Functions
+      newfunction(:artifact_exists, :type => :rvalue) do |args|
 
-    art_exists = false
-    if args[0].nil?
-      return art_exists
-    else
-      wlsDomain = args[0].strip.downcase
-    end
+        art_exists = false
+        if args[0].nil?
+          return art_exists
+        else
+          fullDomainPath = args[0].strip.downcase
+        end
 
-    if args[1].nil?
-      return art_exists
-    else
-      type = args[1].strip.downcase
-    end
+        if args[1].nil?
+          return art_exists
+        else
+          type = args[1].strip.downcase
+        end
 
-    if args[2].nil?
-      return art_exists
-    else
-      wlsObject = args[2].strip
-    end
+        if args[2].nil?
+          return art_exists
+        else
+          wlsObject = args[2].strip
+        end
 
-    if ( type == 'resource' or type == 'resource_entry'  )
-      if args[3].nil?
-        return art_exists
-      else
-        subType = args[3].strip
-      end
-      if args[4].nil?
-        return art_exists
-      else
-        wlsversion = args[4]
-      end
-    else
-      if args[3].nil?
-        return art_exists
-      else
-        wlsversion = args[3]
-      end
-    end
+        if type == 'resource' || type == 'resource_entry'
+          if args[3].nil?
+            return art_exists
+          else
+            subType = args[3].strip
+          end
+        end
 
-    if wlsversion == 1212
-      versionStr = "_1212"
-    else
-      versionStr = ""
-    end
+        prefix = 'ora_mdw_domain'
 
-    prefix = "ora_mdw"+versionStr
-
-    # check the middleware home
-    mdw_count = lookupWlsVar(prefix+'_cnt')
-    if mdw_count  == "empty"
-      return art_exists
-    else
-      # check the all mdw home
-      i = 0
-      while ( i < mdw_count.to_i)
-
-        if wlsVarExists(prefix+'_'+i.to_s)
-          
-          mdw = lookupWlsVar(prefix+'_'+i.to_s)
-          mdw = mdw.strip.downcase
-
-          # how many domains are there in this mdw home
-          domain_count = lookupWlsVar(prefix+'_'+i.to_s+'_domain_cnt')
+        # check the middleware home
+        domain_count = lookup_wls_var(prefix + '_cnt')
+        if domain_count == 'empty'
+          return art_exists
+        else
           n = 0
-          while ( n < domain_count.to_i )
+          while n < domain_count.to_i
 
             # lookup up domain
-            if wlsVarExists(prefix+'_'+i.to_s+'_domain_'+n.to_s)
-              domain = lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s)
+            domain = lookup_wls_var(prefix + '_' + n.to_s)
+            unless domain == 'empty'
               domain = domain.strip.downcase
-
               # do we found the right domain
-              if domain == wlsDomain
+              if domain == fullDomainPath
 
                 # check jdbc datasources
                 if type == 'jdbc'
-                    jdbc =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jdbc')
-                    unless jdbc == "empty"
-                      if jdbc.include? wlsObject
-                        return true
-                      end
-                    end
+                  jdbc =  lookup_wls_var(prefix + '_' + n.to_s + '_jdbc')
+                  unless jdbc == 'empty'
+                    return true if jdbc.include? wlsObject
+                  end
 
                 elsif type == 'cluster'
-                    clusters =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_clusters')
-                    unless clusters == "empty"
-                      if clusters.include? wlsObject
-                        return true
-                      end
-                    end
+                  clusters =  lookup_wls_var(prefix + '_' + n.to_s + '_clusters')
+                  unless clusters == 'empty'
+                    return true if clusters.include? wlsObject
+                  end
 
                 elsif type == 'server'
-                    servers =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_servers')
-                    unless servers == "empty"
-                      if servers.include? wlsObject
-                        return true
-                      end
-                    end
+                  servers =  lookup_wls_var(prefix + '_' + n.to_s + '_servers')
+                  unless servers == 'empty'
+                    return true if servers.include? wlsObject
+                  end
 
                 elsif type == 'machine'
-                    machines =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_machines')
-                    unless machines == "empty"
-                      if machines.include? wlsObject
-                        return true
-                      end
-                    end
+                  machines =  lookup_wls_var(prefix + '_' + n.to_s + '_machines')
+                  unless machines == 'empty'
+                    return true if machines.include? wlsObject
+                  end
 
                 elsif type == 'server_templates'
-                    server_templates =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_server_templates')
-                    unless server_templates == "empty"
-                      if server_templates.include? wlsObject
-                        return true
-                      end
-                    end
+                  server_templates =  lookup_wls_var(prefix + '_' + n.to_s + '_server_templates')
+                  unless server_templates == 'empty'
+                    return true if server_templates.include? wlsObject
+                  end
 
                 elsif type == 'coherence'
-                    coherence_cluster =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_coherence_clusters')
-                    unless coherence_cluster == "empty"
-                      if coherence_cluster.include? wlsObject
-                        return true
-                      end
-                    end
+                  coherence_cluster =  lookup_wls_var(prefix + '_' + n.to_s + '_coherence_clusters')
+                  unless coherence_cluster == 'empty'
+                    return true if coherence_cluster.include? wlsObject
+                  end
                 elsif type == 'resource'
 
                   adapter = wlsObject.downcase
                   plan = subType.downcase
 
-                    planValue =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_eis_'+adapter+'_plan')
-                    unless planValue == "empty"
-                      if planValue.strip.downcase == plan
-                        return true
-                      end
-                    end
+                  planValue =  lookup_wls_var(prefix + '_' + n.to_s + '_eis_' + adapter + '_plan')
+                  unless planValue == 'empty'
+                    return true if planValue.strip.downcase == plan
+                  end
                 elsif type == 'resource_entry'
                   # ora_mdw_0_domain_0_eis_dbadapter_entries  eis/DB/initial;eis/DB/hr;
                   # ora_mdw_0_domain_0_eis_dbadapter_plan     /opt/oracle/wls/Middleware11gR1/Oracle_SOA1/soa/connectors/Plan_DB.xml
@@ -147,75 +106,59 @@ module Puppet::Parser::Functions
                   adapter = wlsObject.downcase
                   entry = subType.strip
 
-                    planEntries = lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_eis_'+adapter+'_entries')
-                    unless planEntries == "empty"
-                      if planEntries.include? entry
-                        return true
-                      end
-                    end
+                  planEntries = lookup_wls_var(prefix + '_' + n.to_s + '_eis_' + adapter + '_entries')
+                  unless planEntries == 'empty'
+                    return true if planEntries.include? entry
+                  end
                 elsif type == 'deployments'
-                    deployments =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_deployments')
-                    unless deployments == "empty"
-                      if deployments.include? wlsObject
-                        return true
-                      end
-                    end
+                  deployments =  lookup_wls_var(prefix + '_' + n.to_s + '_deployments')
+                  unless deployments == 'empty'
+                    return true if deployments.include? wlsObject
+                  end
                 elsif type == 'filestore'
-                    filestores =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_filestores')
-                    unless filestores == "empty"
-                      if filestores.include? wlsObject
-                        return true
-                      end
-                    end
+                  filestores =  lookup_wls_var(prefix + '_' + n.to_s + '_filestores')
+                  unless filestores == 'empty'
+                    return true if filestores.include? wlsObject
+                  end
                 elsif type == 'jdbcstore'
-                    jdbcstores =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jdbcstores')
-                    unless jdbcstores  == "empty"
-                      if jdbcstores.include? wlsObject
-                        return true
-                      end
-                    end
+                  jdbcstores =  lookup_wls_var(prefix + '_' + n.to_s + '_jdbcstores')
+                  unless jdbcstores  == 'empty'
+                    return true if jdbcstores.include? wlsObject
+                  end
                 elsif type == 'safagent'
-                    safagents =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_safagents')
-                    unless safagents  == "empty"
-                      if safagents.include? wlsObject
-                        return true
-                      end
-                    end
+                  safagents =  lookup_wls_var(prefix + '_' + n.to_s + '_safagents')
+                  unless safagents  == 'empty'
+                    return true if safagents.include? wlsObject
+                  end
                 elsif type == 'jmsserver'
-                    jmsservers =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsservers')
-                    unless jmsservers  == "empty"
-                      if jmsservers.include? wlsObject
-                        return true
-                      end
-                    end
+                  jmsservers =  lookup_wls_var(prefix + '_' + n.to_s + '_jmsservers')
+                  unless jmsservers  == 'empty'
+                    return true if jmsservers.include? wlsObject
+                  end
                 elsif type == 'jmsmodule'
-                    jmsmodules =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodules')
-                    unless jmsmodules  == "empty"
-                      if jmsmodules.include? wlsObject + ";"
-                        return true
-                      end
-                    end
+                  jmsmodules =  lookup_wls_var(prefix + '_' + n.to_s + '_jmsmodules')
+                  unless jmsmodules  == 'empty'
+                    return true if jmsmodules.include? wlsObject + ';'
+                  end
 
                 elsif type == 'jmsobject'
-                  #puts 'jmsobject'
-                  if wlsVarExists(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_cnt')
-                    jms_count = lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_cnt')
-                    #puts 'jmsobject count: ' + jms_count
+                  # puts 'jmsobject'
+                  if wlsVarExists(prefix + '_' + n.to_s + '_jmsmodule_cnt')
+                    jms_count = lookup_wls_var(prefix + '_' + n.to_s + '_jmsmodule_cnt')
+                    # puts 'jmsobject count: ' + jms_count
 
-                    unless jms_count == "empty"
-                      #puts 'jmsobject count found'
+                    unless jms_count == 'empty'
+                      # puts 'jmsobject count found'
 
                       l = 0
-                      while ( l < jms_count.to_i )
-                        #puts 'jmsobject counter: ' + l.to_s
+                      while l < jms_count.to_i
+                        # puts 'jmsobject counter: ' + l.to_s
 
-                        jmsobjects = lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_'+l.to_s+'_objects')
-                        #puts 'jmsobject' + jmsobjects
+                        jmsobjects = lookup_wls_var(prefix + '_' + n.to_s + '_jmsmodule_' + l.to_s + '_objects')
+                        # puts 'jmsobject' + jmsobjects
 
-                        unless jmsobjects == "empty"
-                          if jmsobjects.include? wlsObject
-                            return true
-                          end
+                        unless jmsobjects == 'empty'
+                          return true if jmsobjects.include? wlsObject
                         end
                         l += 1
                       end
@@ -223,25 +166,25 @@ module Puppet::Parser::Functions
                   end
 
                 elsif type == 'jmssubdeployment'
-                  #puts 'jmssubdeployment'
+                  # puts 'jmssubdeployment'
                   # this is more complex, this object can exist with this name in multiple jmsmodules
-                  if wlsVarExists(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_cnt')
-                    jms_count =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_cnt')
-                    unless jms_count == "empty"
+                  if wlsVarExists(prefix + '_' + n.to_s + '_jmsmodule_cnt')
+                    jms_count =  lookup_wls_var(prefix + '_' + n.to_s + '_jmsmodule_cnt')
+                    unless jms_count == 'empty'
 
                       l = 0
-                      while ( l < jms_count.to_i )
-                        jmsSubObjects =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_'+l.to_s+'_subdeployments')
-                        jmsModule     =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_'+l.to_s+'_name')
+                      while l < jms_count.to_i
+                        jmsSubObjects =  lookup_wls_var(prefix + '_' + n.to_s + '_jmsmodule_' + l.to_s + '_subdeployments')
+                        jmsModule     =  lookup_wls_var(prefix + '_' + n.to_s + '_jmsmodule_' + l.to_s + '_name')
                         # example "JMSModule1/sub-nonpersistent"
-                        first = "^[^/]+"
-                        last  = "[^/]+$"
+                        first = '^[^/]+'
+                        last  = '[^/]+$'
                         subNameString  = wlsObject.match last
                         moduleString   = wlsObject.match first
 
-                        #puts "trying to find " + subNameString[0] + " for module " + moduleString[0] + " and " +jmsModule+" with input " + wlsObject
+                        # puts "trying to find " + subNameString[0] + " for module " + moduleString[0] + " and " +jmsModule+" with input " + wlsObject
                         if moduleString[0] == jmsModule
-                          unless jmsSubObjects == "empty"
+                          unless jmsSubObjects == 'empty'
                             if jmsSubObjects.include? subNameString[0]
                               # puts "return quota found "
                               return true
@@ -256,24 +199,24 @@ module Puppet::Parser::Functions
                   end
 
                 elsif type == 'jmsquota'
-                  #puts 'jmsquota'
+                  # puts 'jmsquota'
                   # this is more complex, this object can exist with this name in multiple jmsmodules
-                  if wlsVarExists(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_cnt')
-                    jms_count =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_cnt')
-                    unless jms_count == "empty"
+                  if wlsVarExists(prefix + '_' + n.to_s + '_jmsmodule_cnt')
+                    jms_count =  lookup_wls_var(prefix + '_' + n.to_s + '_jmsmodule_cnt')
+                    unless jms_count == 'empty'
                       l = 0
-                      while ( l < jms_count.to_i )
-                        jmsQuotaObjects =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_'+l.to_s+'_quotas')
-                        jmsModule       =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_'+l.to_s+'_name')
+                      while l < jms_count.to_i
+                        jmsQuotaObjects =  lookup_wls_var(prefix + '_' + n.to_s + '_jmsmodule_' + l.to_s + '_quotas')
+                        jmsModule       =  lookup_wls_var(prefix + '_' + n.to_s + '_jmsmodule_' + l.to_s + '_name')
                         # example "JMSModule1/Quota-S"
-                        first = "^[^/]+"
-                        last  = "[^/]+$"
+                        first = '^[^/]+'
+                        last  = '[^/]+$'
                         quotaString  = wlsObject.match last
                         moduleString = wlsObject.match first
 
                         # puts "trying to find " + quotaString[0] + " for module " + moduleString[0] + " and " +jmsModule+" with input " + wlsObject
                         if moduleString[0] == jmsModule
-                          unless jmsQuotaObjects == "empty"
+                          unless jmsQuotaObjects == 'empty'
                             if jmsQuotaObjects.include? quotaString[0]
                               # puts "return quota found "
                               return true
@@ -287,24 +230,24 @@ module Puppet::Parser::Functions
                   end
 
                 elsif type == 'foreignserver'
-                  #puts 'foreignserver'
+                  # puts 'foreignserver'
                   # this is more complex, this object can exist with this name in multiple jmsmodules
-                  if wlsVarExists(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_cnt')
-                    jms_count =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_cnt')
-                    unless jms_count == "empty"
+                  if wlsVarExists(prefix + '_' + n.to_s + '_jmsmodule_cnt')
+                    jms_count =  lookup_wls_var(prefix + '_' + n.to_s + '_jmsmodule_cnt')
+                    unless jms_count == 'empty'
                       l = 0
-                      while ( l < jms_count.to_i )
-                        jmsFsObjects  =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_'+l.to_s+'_foreign_servers')
-                        jmsModule     =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_'+l.to_s+'_name')
+                      while l < jms_count.to_i
+                        jmsFsObjects  =  lookup_wls_var(prefix + '_' + n.to_s + '_jmsmodule_' + l.to_s + '_foreign_servers')
+                        jmsModule     =  lookup_wls_var(prefix + '_' + n.to_s + '_jmsmodule_' + l.to_s + '_name')
                         # example "JMSModule1/ForeignServer"
-                        first = "^[^/]+"
-                        last  = "[^/]+$"
+                        first = '^[^/]+'
+                        last  = '[^/]+$'
                         foreignServerString  = wlsObject.match last
                         moduleString         = wlsObject.match first
 
                         # puts "trying to find " + foreignServerString[0] + " for module " + moduleString[0] + " and " +jmsModule+" with input " + wlsObject
                         if moduleString[0] == jmsModule
-                          unless jmsFsObjects == "empty"
+                          unless jmsFsObjects == 'empty'
                             if jmsFsObjects.include? foreignServerString[0]
                               # puts "return foreign server found "
                               return true
@@ -318,29 +261,29 @@ module Puppet::Parser::Functions
                   end
 
                 elsif type == 'foreignserver_object'
-                  #puts 'foreignserver_object'
+                  # puts 'foreignserver_object'
                   # this is more complex, this object can exist with this name in multiple jmsmodules
-                  if wlsVarExists(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_cnt')
-                    jms_count =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_cnt')
-                    unless jms_count == "empty"
+                  if wlsVarExists(prefix + '_' + n.to_s + '_jmsmodule_cnt')
+                    jms_count =  lookup_wls_var(prefix + '_' + n.to_s + '_jmsmodule_cnt')
+                    unless jms_count == 'empty'
                       l = 0
-                      while ( l < jms_count.to_i )
+                      while l < jms_count.to_i
                         objects = wlsObject.split('/')
-                        #puts "CF entries: " + objects[0] + "-" + objects[1] + "-" + objects[2]
+                        # puts "CF entries: " + objects[0] + "-" + objects[1] + "-" + objects[2]
                         # example "jmsClusterModule/ForeignServer/TestQueue"
                         foreignServerObjectString  = objects[2]
                         # facts are in lowercase
                         foreignServerString        = objects[1].downcase
                         moduleString               = objects[0]
-                        #puts "lookup " + prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_'+l.to_s+'_foreign_server_'+foreignServerString+'_objects'
-                        jmsFsEntriesObjects =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_'+l.to_s+'_foreign_server_'+foreignServerString+'_objects')
-                        jmsModule           =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_jmsmodule_'+l.to_s+'_name')
-                        #puts "found: " + jmsFsEntriesObjects
-                        #puts "trying to find " + foreignServerString + " for module " + moduleString + " and " +jmsModule+" with input " + wlsObject
+                        # puts "lookup " + prefix + '_' + n.to_s + '_jmsmodule_'+l.to_s+'_foreign_server_'+foreignServerString+'_objects'
+                        jmsFsEntriesObjects =  lookup_wls_var(prefix + '_' + n.to_s + '_jmsmodule_' + l.to_s + '_foreign_server_' + foreignServerString + '_objects')
+                        jmsModule           =  lookup_wls_var(prefix + '_' + n.to_s + '_jmsmodule_' + l.to_s + '_name')
+                        # puts "found: " + jmsFsEntriesObjects
+                        # puts "trying to find " + foreignServerString + " for module " + moduleString + " and " +jmsModule+" with input " + wlsObject
                         if moduleString == jmsModule
-                          unless jmsFsEntriesObjects == "empty"
+                          unless jmsFsEntriesObjects == 'empty'
                             if jmsFsEntriesObjects.include? foreignServerObjectString
-                              #puts "return foreign server entry found "
+                              # puts "return foreign server entry found "
                               return true
                             end
                           end
@@ -351,42 +294,33 @@ module Puppet::Parser::Functions
                     end
                   end
 
-
                 end # if type
-              end  # domain_path equal
-            end # domain not nil
+
+              end
+            end
             n += 1
-
-          end  # while domain
-
+          end
         end
-        i += 1
-      end # while mdw
 
-    end # mdw count
-
-    return art_exists
+        return art_exists
+      end
+    end
   end
 end
 
-def lookupWlsVar(name)
-  #puts "lookup fact "+name
-  if wlsVarExists(name)
+def lookup_wls_var(name)
+  if wls_var_exists(name)
     return lookupvar(name).to_s
   end
-  #puts "return empty"
-  return "empty"
+  'empty'
 end
 
-def wlsVarExists(name)
-  #puts "lookup fact "+name
+def wls_var_exists(name)
   if lookupvar(name) != :undefined
     if lookupvar(name).nil?
-      #puts "return false"
       return false
     end
-    return true 
+    return true
   end
-  #puts "not found"
-  return false 
-end   
+  false
+end

@@ -1,224 +1,138 @@
+#
+#
+#
 class orautils(
-  $osOracleHomeParam      = undef,
-  $oraInventoryParam      = undef,
-  $osDomainTypeParam      = undef,
-  $osLogFolderParam       = undef,
-  $osDownloadFolderParam  = undef,
-  $osMdwHomeParam         = undef,
-  $osWlHomeParam          = undef,
-  $oraUserParam           = undef,
-  $osDomainParam          = undef,
-  $osDomainPathParam      = undef,
-  $nodeMgrPathParam       = undef,
-  $nodeMgrPortParam       = undef,
-  $wlsUserParam           = undef,
-  $wlsPasswordParam       = undef,
-  $wlsAdminServerParam    = undef,
-) {
+  $osOracleHomeParam       = $orautils::params::osOracleHome,
+  $oraInventoryParam       = $orautils::params::oraInventory,
+  $osDomainTypeParam       = $orautils::params::osDomainType,
+  $osLogFolderParam        = $orautils::params::osLogFolder,
+  $osDownloadFolderParam   = $orautils::params::osDownloadFolder,
+  $osMdwHomeParam          = $orautils::params::osMdwHome,
+  $osWlHomeParam           = $orautils::params::osWlHome,
+  $oraUserParam            = $orautils::params::oraUser,
+  $oraGroupParam           = $orautils::params::oraGroup,
+  $osDomainParam           = $orautils::params::osDomain,
+  $osDomainPathParam       = $orautils::params::osDomainPath,
+  $nodeMgrPathParam        = $orautils::params::nodeMgrPath,
+  $nodeMgrPortParam        = $orautils::params::nodeMgrPort,
+  $nodeMgrAddressParam     = $orautils::params::nodeMgrAddress,
+  $wlsUserParam            = $orautils::params::wlsUser,
+  $wlsPasswordParam        = $orautils::params::wlsPassword,
+  $wlsAdminServerParam     = $orautils::params::wlsAdminServer,
+  $jsseEnabledParam        = $orautils::params::jsseEnabled,
+  $customTrust             = false,
+  $trustKeystoreFile       = undef,
+  $trustKeystorePassphrase = undef,
+) inherits orautils::params
+{
 
-  include orautils::params
+  case $::kernel {
+    'Linux', 'SunOS': {
 
-  case $operatingsystem {
-    CentOS, RedHat, OracleLinux, Ubuntu, Debian, SLES, Solaris: {
+    $mode             = '0775'
 
-    # fixed
-
-    if $oraUserParam != undef {
-      $user           = $oraUserParam
-    } else {
-      $user           = "oracle"
-    }
-    $group            = "dba"
-    $mode             = "0775"
-
-    # ok
     $shell            = $orautils::params::shell
     $userHome         = $orautils::params::userHome
     $oraInstHome      = $orautils::params::oraInstHome
 
-
-    if ( $osDomainTypeParam == undef ) {
-      $osDomainType = $orautils::params::osDomainType
+    if $customTrust == true {
+      $trust_env = "-Dweblogic.security.TrustKeyStore=CustomTrust -Dweblogic.security.CustomTrustKeyStoreFileName=${trustKeystoreFile} -Dweblogic.security.CustomTrustKeystorePassPhrase=${trustKeystorePassphrase}"
     } else {
-      $osDomainType = $osDomainTypeParam
+      $trust_env = ''
     }
-
-    if ( $osOracleHomeParam == undef ) {
-      $osOracleHome = $orautils::params::osOracleHome
-    } else {
-      $osOracleHome = $osOracleHomeParam
-    }
-
-    if ( $osDownloadFolderParam == undef ) {
-      $osDownloadFolder = $orautils::params::osDownloadFolder
-    } else {
-      $osDownloadFolder = $osDownloadFolderParam
-    }
-
-    if ( $osMdwHomeParam == undef ) {
-      $osMdwHome = $orautils::params::osMdwHome
-    } else {
-      $osMdwHome = $osMdwHomeParam
-    }
-
-    if ( $osWlHomeParam == undef ) {
-      $osWlHome = $orautils::params::osWlHome
-    } else {
-      $osWlHome = $osWlHomeParam
-    }
-
-    if ( $oraUserParam == undef ) {
-      $oraUser = $orautils::params::oraUser
-    } else {
-      $oraUser = $oraUserParam
-    }
-
-    if ( $osLogFolderParam == undef ) {
-      $osLogFolder = $orautils::params::osLogFolder
-    } else {
-      $osLogFolder = $osLogFolderParam
-    }
-
-    if ( $oraInventoryParam == undef ) {
-      $oraInventory  = $orautils::params::oraInventory
-    } else {
-      $oraInventory  = $oraInventoryParam
-    }
-
-    if ( $osDomainParam == undef ) {
-      $osDomain         = $orautils::params::osDomain
-    } else {
-      $osDomain         = $osDomainParam
-    }
-
-    if ( $osDomainPathParam == undef ) {
-      $osDomainPath     = $orautils::params::osDomainPath
-    } else {
-      $osDomainPath     = $osDomainPathParam
-    }
-
-    if ( $nodeMgrPortParam == undef ) {
-      $nodeMgrPort      = $orautils::params::nodeMgrPort
-    } else {
-      $nodeMgrPort      = $nodeMgrPortParam
-    }
-
-    if ( $nodeMgrPathParam == undef ) {
-      $nodeMgrPat  = $orautils::params::nodeMgrPath
-    } else {
-      $nodeMgrPath = $nodeMgrPathParam
-    }
-
-    if ( $wlsUserParam == undef ) {
-      $wlsUser = $orautils::params::wlsUser
-    } else {
-      $wlsUser = $wlsUserParam
-    }
-
-    if ( $wlsPasswordParam == undef ) {
-      $wlsPassword = $orautils::params::wlsPassword
-    } else {
-      $wlsPassword = $wlsPasswordParam
-    }
-
-    if ( $wlsAdminServerParam == undef ) {
-      $wlsAdminServer = $orautils::params::wlsAdminServer
-    } else {
-      $wlsAdminServer = $wlsAdminServerParam
-    }
-
-
-
 
     if ! defined(File['/opt/scripts']) {
-     file { '/opt/scripts':
-       ensure  => directory,
-       recurse => false,
-       replace => false,
-       owner   => $user,
-       group   => $group,
-       mode    => $mode,
+      file { '/opt/scripts':
+        ensure  => directory,
+        recurse => false,
+        replace => false,
+        owner   => $oraUserParam,
+        group   => $oraGroupParam,
+        mode    => $mode,
       }
     }
 
     if ! defined(File['/opt/scripts/wls']) {
-     file { '/opt/scripts/wls':
-       ensure  => directory,
-       recurse => false,
-       replace => false,
-       owner   => $user,
-       group   => $group,
-       mode    => $mode,
-       require => File['/opt/scripts'],
+      file { '/opt/scripts/wls':
+        ensure  => directory,
+        recurse => false,
+        replace => false,
+        owner   => $oraUserParam,
+        group   => $oraGroupParam,
+        mode    => $mode,
+        require => File['/opt/scripts'],
       }
     }
 
-
-    file { "showStatus.sh":
-      path    => "/opt/scripts/wls/showStatus.sh",
+    file { 'showStatus.sh':
       ensure  => present,
-      content => template("orautils/wls/showStatus.sh.erb"),
-      owner   => $user,
-      group   => $group,
+      path    => '/opt/scripts/wls/showStatus.sh',
+      content => regsubst(template('orautils/wls/showStatus.sh.erb'), '\r\n', "\n", 'EMG'),
+      # content => template('orautils/wls/showStatus.sh.erb'),
+      owner   => $oraUserParam,
+      group   => $oraGroupParam,
       mode    => $mode,
       require => File['/opt/scripts/wls'],
     }
 
-    file { "stopNodeManager.sh":
-      path    => "/opt/scripts/wls/stopNodeManager.sh",
+    file { 'stopNodeManager.sh':
       ensure  => present,
-      content => template("orautils/wls/stopNodeManager.sh.erb"),
-      owner   => $user,
-      group   => $group,
+      path    => '/opt/scripts/wls/stopNodeManager.sh',
+      content => regsubst(template('orautils/wls/stopNodeManager.sh.erb'), '\r\n', "\n", 'EMG'),
+      # content => template('orautils/wls/stopNodeManager.sh.erb'),
+      owner   => $oraUserParam,
+      group   => $oraGroupParam,
       mode    => $mode,
       require => File['/opt/scripts/wls'],
     }
 
-    file { "cleanOracleEnvironment.sh":
-      path    => "/opt/scripts/wls/cleanOracleEnvironment.sh",
+    file { 'cleanOracleEnvironment.sh':
       ensure  => present,
-      content => template("orautils/cleanOracleEnvironment.sh.erb"),
+      path    => '/opt/scripts/wls/cleanOracleEnvironment.sh',
+      content => regsubst(template('orautils/cleanOracleEnvironment.sh.erb'), '\r\n', "\n", 'EMG'),
+      # content => template('orautils/cleanOracleEnvironment.sh.erb'),
       owner   => 'root',
       group   => 'root',
       mode    => '0770',
       require => File['/opt/scripts/wls'],
     }
 
-
-    file { "startNodeManager.sh":
-      path    => "/opt/scripts/wls/startNodeManager.sh",
+    file { 'startNodeManager.sh':
       ensure  => present,
-      content => template("orautils/startNodeManager.sh.erb"),
-      owner   => $user,
-      group   => $group,
+      path    => '/opt/scripts/wls/startNodeManager.sh',
+      content => regsubst(template('orautils/startNodeManager.sh.erb'), '\r\n', "\n", 'EMG'),
+      # content => template('orautils/startNodeManager.sh.erb'),
+      owner   => $oraUserParam,
+      group   => $oraGroupParam,
       mode    => $mode,
       require => File['/opt/scripts/wls'],
     }
 
-
-    file { "startWeblogicAdmin.sh":
-      path    => "/opt/scripts/wls/startWeblogicAdmin.sh",
+    file { 'startWeblogicAdmin.sh':
       ensure  => present,
-      content => template("orautils/startWeblogicAdmin.sh.erb"),
-      owner   => $user,
-      group   => $group,
+      path    => '/opt/scripts/wls/startWeblogicAdmin.sh',
+      content => regsubst(template('orautils/startWeblogicAdmin.sh.erb'), '\r\n', "\n", 'EMG'),
+      # content => template('orautils/startWeblogicAdmin.sh.erb'),
+      owner   => $oraUserParam,
+      group   => $oraGroupParam,
       mode    => $mode,
       require => File['/opt/scripts/wls'],
     }
 
-    file { "stopWeblogicAdmin.sh":
-      path    => "/opt/scripts/wls/stopWeblogicAdmin.sh",
+    file { 'stopWeblogicAdmin.sh':
       ensure  => present,
-      content => template("orautils/stopWeblogicAdmin.sh.erb"),
-      owner   => $user,
-      group   => $group,
+      path    => '/opt/scripts/wls/stopWeblogicAdmin.sh',
+      content => regsubst(template('orautils/stopWeblogicAdmin.sh.erb'), '\r\n', "\n", 'EMG'),
+      # content => template('orautils/stopWeblogicAdmin.sh.erb'),
+      owner   => $oraUserParam,
+      group   => $oraGroupParam,
       mode    => $mode,
       require => File['/opt/scripts/wls'],
     }
 
     }
     default: {
-      notify{"Operating System not supported":}
+      notify{'This operating system is not supported':}
     }
   }
 }

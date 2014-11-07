@@ -177,7 +177,7 @@ SID = "<%= @dbName %>"
 # Default value : None
 # Mandatory     : No (Yes for RAC database-centric database )
 #-----------------------------------------------------------------------------
-#NODELIST=
+NODELIST=<%= @cluster_nodes %>
 
 #-----------------------------------------------------------------------------
 # Name          : TEMPLATENAME
@@ -198,7 +198,6 @@ TEMPLATENAME = "General_Purpose.dbc"
 # Mandatory     : No
 #-----------------------------------------------------------------------------
 #OBFUSCATEDPASSWORDS = FALSE
-
 
 #-----------------------------------------------------------------------------
 # Name          : SYSPASSWORD
@@ -228,7 +227,7 @@ SYSTEMPASSWORD = "<%= @systemPassword %>"
 # Default value : NONE
 # Mandatory     : No
 #-----------------------------------------------------------------------------
-EMCONFIGURATION = "NONE"
+EMCONFIGURATION = "<%= @emConfiguration %>"
 
 #-----------------------------------------------------------------------------
 # Name          : DISABLESECURITYCONFIGURATION
@@ -239,7 +238,6 @@ EMCONFIGURATION = "NONE"
 # Mandatory     : No
 #-----------------------------------------------------------------------------
 #DISABLESECURITYCONFIGURATION = "NONE"
-
 
 #-----------------------------------------------------------------------------
 # Name          : SYSMANPASSWORD
@@ -259,7 +257,7 @@ EMCONFIGURATION = "NONE"
 # Default value : None
 # Mandatory     : Yes, if EMCONFIGURATION is specified
 #-----------------------------------------------------------------------------
-#DBSNMPPASSWORD = "password"
+DBSNMPPASSWORD = "<%= @dbSnmpPassword %>"
 
 #-----------------------------------------------------------------------------
 # Name          : CENTRALAGENT
@@ -337,8 +335,6 @@ EMCONFIGURATION = "NONE"
 #-----------------------------------------------------------------------------
 #DVACCOUNTMANAGERPASSWORD = ""
 
-
-
 #-----------------------------------------------------------------------------
 # Name          : DATAFILEJARLOCATION 
 # Datatype      : String
@@ -377,7 +373,7 @@ RECOVERYAREADESTINATION="<%= @recoveryAreaDestination %>"
 # Default value : FS
 # Mandatory     : No
 #-----------------------------------------------------------------------------
-#STORAGETYPE=FS
+STORAGETYPE=<%= @storageType %>
 
 #-----------------------------------------------------------------------------
 # Name          : DISKGROUPNAME
@@ -386,7 +382,7 @@ RECOVERYAREADESTINATION="<%= @recoveryAreaDestination %>"
 # Default value : DATA
 # Mandatory     : No
 #-----------------------------------------------------------------------------
-#DISKGROUPNAME=DATA
+DISKGROUPNAME=<%= @asmDiskgroup %>
 
 #-----------------------------------------------------------------------------
 # Name          : ASMSNMP_PASSWORD
@@ -395,7 +391,7 @@ RECOVERYAREADESTINATION="<%= @recoveryAreaDestination %>"
 # Default value : None
 # Mandatory     : No
 #-----------------------------------------------------------------------------
-#ASMSNMP_PASSWORD=""
+ASMSNMP_PASSWORD=<%= @asmSnmpPassword %>
 
 #-----------------------------------------------------------------------------
 # Name          : RECOVERYGROUPNAME
@@ -404,8 +400,7 @@ RECOVERYAREADESTINATION="<%= @recoveryAreaDestination %>"
 # Default value : RECOVERY
 # Mandatory     : No
 #-----------------------------------------------------------------------------
-#RECOVERYGROUPNAME=RECOVERY
-
+RECOVERYGROUPNAME=<%= @recoveryDiskgroup %>
 
 #-----------------------------------------------------------------------------
 # Name          : CHARACTERSET
@@ -567,7 +562,7 @@ TOTALMEMORY = "<%= @memoryTotal %>"
 # Default value : none
 # Mandatory     : YES
 #-----------------------------------------------------------------------------
-SOURCEDB = "myhost:1521:orcl"
+SOURCEDB = "myhost:<%= @dbPort %>:orcl"
 
 #-----------------------------------------------------------------------------
 # Name          : SYSDBAUSERNAME 
@@ -748,7 +743,6 @@ GDBNAME = "orcl11.us.oracle.com"
 #-----------------------------------------------------------------------------
 #SYSDBAUSERNAME = "sys"
 
-
 #-----------------------------------------------------------------------------
 # Name          : SYSDBAPASSWORD
 # Datatype      : String
@@ -825,8 +819,6 @@ GDBNAME = "orcl11.us.oracle.com"
 #-----------------------------------------------------------------------------
 #DISABLESECURITYCONFIGURATION = "NONE"
 
-
-
 #-----------------------------------------------------------------------------
 # Name          : ENABLESECURITYCONFIGURATION
 # Datatype      : String
@@ -836,7 +828,6 @@ GDBNAME = "orcl11.us.oracle.com"
 # Mandatory     : No
 #-----------------------------------------------------------------------------
 #ENABLESECURITYCONFIGURATION = "true"
-
 
 #-----------------------------------------------------------------------------
 # Name          : EMCONFIGURATION
@@ -866,7 +857,7 @@ GDBNAME = "orcl11.us.oracle.com"
 # Default value : None
 # Mandatory     : Yes, if EMCONFIGURATION is specified
 #-----------------------------------------------------------------------------
-#DBSNMPPASSWORD = "password"
+DBSNMPPASSWORD = "<%= @dbSnmpPassword %>"
 
 #-----------------------------------------------------------------------------
 # Name          : CENTRALAGENT

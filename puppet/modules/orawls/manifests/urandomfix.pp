@@ -12,53 +12,57 @@
 #  set java.security in JDK ( jre/lib/security )
 #  set -Djava.security.egd=file:/dev/./urandom param
 #
-class orawls::urandomfix () {
+class orawls::urandomfix() {
   $path = '/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:'
 
-  package { "rng-tools": ensure => present, }
+  package { 'rng-tools':
+    ensure => present,
+  }
 
-  case $operatingsystem {
-    CentOS, RedHat, OracleLinux : {
-      exec { "set urandom /etc/sysconfig/rngd":
+  case $::operatingsystem {
+    'CentOS', 'RedHat', 'OracleLinux' : {
+      exec { 'set urandom /etc/sysconfig/rngd':
         command => "sed -i -e's/EXTRAOPTIONS=\"\"/EXTRAOPTIONS=\"-r \\/dev\\/urandom -o \\/dev\\/random -b\"/g' /etc/sysconfig/rngd",
         unless  => "/bin/grep '^EXTRAOPTIONS=\"-r /dev/urandom -o /dev/random -b\"' /etc/sysconfig/rngd",
-        require => Package["rng-tools"],
+        require => Package['rng-tools'],
         user    => 'root',
         path    => $path,
       }
 
-      service { "start rngd service":
-        name    => "rngd",
-        enable  => true,
+      service { 'start rngd service':
         ensure  => true,
-        require => Exec["set urandom /etc/sysconfig/rngd"],
+        name    => 'rngd',
+        enable  => true,
+        require => Exec['set urandom /etc/sysconfig/rngd'],
       }
 
-      exec { "chkconfig rngd":
-        command => "chkconfig --add rngd",
-        require => Service["start rngd service"],
+      exec { 'chkconfig rngd':
+        command => 'chkconfig --add rngd',
+        require => Service['start rngd service'],
         user    => 'root',
         unless  => "chkconfig | /bin/grep 'rngd'",
         path    => $path,
       }
 
     }
-    Ubuntu, Debian, SLES        : {
-      exec { "set urandom /etc/default/rng-tools":
+    'Ubuntu', 'Debian', 'SLES': {
+      exec { 'set urandom /etc/default/rng-tools':
         command => "sed -i -e's/#HRNGDEVICE=\\/dev\\/null/HRNGDEVICE=\\/dev\\/urandom/g' /etc/default/rng-tools",
         unless  => "/bin/grep '^HRNGDEVICE=/dev/urandom' /etc/default/rng-tools",
-        require => Package["rng-tools"],
+        require => Package['rng-tools'],
         user    => 'root',
         path    => $path,
       }
 
-      service { "start rng-tools service":
-        name    => "rng-tools",
-        enable  => true,
+      service { 'start rng-tools service':
         ensure  => true,
-        require => Exec["set urandom /etc/default/rng-tools"],
+        name    => 'rng-tools',
+        enable  => true,
+        require => Exec['set urandom /etc/default/rng-tools'],
       }
     }
-
+    default: {
+      fail("Unrecognized operating system ${::operatingsystem}, please use it on a Linux host")
+    }
   }
 }

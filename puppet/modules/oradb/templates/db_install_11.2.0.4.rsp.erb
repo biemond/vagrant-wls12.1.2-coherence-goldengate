@@ -23,7 +23,7 @@ ORACLE_HOSTNAME=
 #-------------------------------------------------------------------------------
 # Specify the Unix group to be set for the inventory directory.  
 #-------------------------------------------------------------------------------
-UNIX_GROUP_NAME=<%= @group %>
+UNIX_GROUP_NAME=<%= @group_install %>
 
 #-------------------------------------------------------------------------------
 # Specify the location which holds the inventory files.
@@ -98,7 +98,7 @@ oracle.install.db.InstallEdition=<%= @databaseType %>
 #         are considered for install.
 # false : Value for 'optionalComponents' is not considered.
 #------------------------------------------------------------------------------
-oracle.install.db.EEOptionsSelection=false
+oracle.install.db.EEOptionsSelection=<%= @eeOptionsSelection %>
 
 #------------------------------------------------------------------------------
 # This variable is considered only if 'EEOptionsSelection' is set to true. 
@@ -117,7 +117,8 @@ oracle.install.db.EEOptionsSelection=false
 #              oracle.rdbms.partitioning:11.2.0.4.0 - Oracle Partitioning
 #              oracle.rdbms.rat:11.2.0.4.0 - Oracle Real Application Testing
 #------------------------------------------------------------------------------
-oracle.install.db.optionalComponents=oracle.rdbms.partitioning:11.2.0.4.0,oracle.oraolap:11.2.0.4.0,oracle.rdbms.dm:11.2.0.4.0,oracle.rdbms.dv:11.2.0.4.0,oracle.rdbms.lbac:11.2.0.4.0,oracle.rdbms.rat:11.2.0.4.0
+#oracle.install.db.optionalComponents=oracle.rdbms.partitioning:11.2.0.4.0,oracle.oraolap:11.2.0.4.0,oracle.rdbms.dm:11.2.0.4.0,oracle.rdbms.dv:11.2.0.4.0,oracle.rdbms.lbac:11.2.0.4.0,oracle.rdbms.rat:11.2.0.4.0
+oracle.install.db.optionalComponents=<%= @eeOptionalComponents %>
 
 ###############################################################################
 #                                                                             #
@@ -141,13 +142,13 @@ oracle.install.db.DBA_GROUP=<%= @group %>
 # The OPER_GROUP is the OS group which is to be granted OSOPER privileges.
 # The value to be specified for OSOPER group is optional.
 #------------------------------------------------------------------------------
-oracle.install.db.OPER_GROUP=<%= @group %>
+oracle.install.db.OPER_GROUP=<%= @group_oper %>
 
 #------------------------------------------------------------------------------
 # Specify the cluster node names selected during the installation.
 # Example : oracle.install.db.CLUSTER_NODES=node1,node2
 #------------------------------------------------------------------------------
-oracle.install.db.CLUSTER_NODES=
+oracle.install.db.CLUSTER_NODES=<%= @cluster_nodes %>
 
 #------------------------------------------------------------------------------
 # This variable is used to enable or disable RAC One Node install.

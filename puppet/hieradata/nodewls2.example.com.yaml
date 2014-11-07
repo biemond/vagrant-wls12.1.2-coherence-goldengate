@@ -3,19 +3,28 @@ messageEnv: 'node2'
 
 orawls::weblogic::log_output:   true
 
+logoutput:                &logoutput                     true
 
-logoutput:                     &logoutput                     true
-
+wls_os_user:              &wls_os_user              "oracle"
+wls_weblogic_user:        &wls_weblogic_user        "weblogic"
+wls_weblogic_home_dir:    &wls_weblogic_home_dir    "/opt/oracle/middleware12c/wlserver"
+wls_middleware_home_dir:  &wls_middleware_home_dir  "/opt/oracle/middleware12c"
 
 # when you have just one domain on a server
-domain_name:                "Wls1212"
-domain_adminserver:         "AdminServer"
-domain_adminserver_address: "10.10.10.10"
-domain_adminserver_port:    7001
-domain_nodemanager_port:    5556
-domain_wls_password:        "weblogic1"
-domain_user_config_file:    "/home/oracle/oracle-Wls1036-WebLogicConfig.properties"
-domain_user_key_file:       "/home/oracle/oracle-Wls1036-WebLogicKey.properties"
+domain_name:                &domain_name                "Wls1212"
+domain_adminserver:         &domain_adminserver         "AdminServer"
+domain_adminserver_address: &domain_adminserver_address "10.10.10.10"
+domain_adminserver_port:    &domain_adminserver_port    7001
+domain_nodemanager_port:    &domain_nodemanager_port    5556
+domain_wls_password:        &domain_wls_password        "weblogic1"
+
+orautils::osDomainParam:          *domain_name
+orautils::nodeMgrAddressParam:    *domain_adminserver_address
+orautils::wlsPasswordParam:       *domain_wls_password
+orautils::wlsAdminServerParam:    *domain_adminserver
+
+orautils::nodeMgrAddressParam:    "10.10.10.200"
+
 
 # copy domains to other nodes
 copy_instances:
@@ -25,6 +34,5 @@ copy_instances:
 # create and startup the nodemanager
 nodemanager_instances:
   'nodemanager':
-     log_output:           *logoutput
-     nodemanager_address:  "10.10.10.200"
-
+    log_output:                            *logoutput
+    nodemanager_address:                   "10.10.10.200"

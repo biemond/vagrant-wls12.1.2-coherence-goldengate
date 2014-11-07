@@ -21,34 +21,3 @@ oracle_database_service_name: 'test.oracle.com'
 oracle_database_sys_password:    'Welcome01'
 oracle_database_system_password: 'Welcome01'
 
-# global WebLogic vars
-wls_oracle_base_home_dir: &wls_oracle_base_home_dir "/oracle"
-wls_weblogic_user:        &wls_weblogic_user        "weblogic"
-wls_weblogic_home_dir:    &wls_weblogic_home_dir    "/oracle/product/12.1.2/middleware/wlserver"
-wls_middleware_home_dir:  &wls_middleware_home_dir  "/oracle/product/12.1.2/middleware"
-wls_version:              &wls_version              1212
-
-# global OS vars
-wls_os_user:              &wls_os_user              "oracle"
-wls_os_group:             &wls_os_group             "dba"
-wls_download_dir:         &wls_download_dir         "/install"
-wls_source:               &wls_source               "/software"
-wls_jdk_home_dir:         &wls_jdk_home_dir         "/usr/java/jdk1.7.0_45"
-
-
-#WebLogic installation variables 
-orawls::weblogic::version:              *wls_version
-orawls::weblogic::filename:             "wls_121200.jar"
-
-orawls::weblogic::middleware_home_dir:  *wls_middleware_home_dir
-orawls::weblogic::log_output:           true
-
-# hiera default anchors
-orawls::weblogic::jdk_home_dir:         *wls_jdk_home_dir
-orawls::weblogic::oracle_base_home_dir: *wls_oracle_base_home_dir
-orawls::weblogic::os_user:              *wls_os_user
-orawls::weblogic::os_group:             *wls_os_group
-orawls::weblogic::download_dir:         *wls_download_dir
-orawls::weblogic::source:               *wls_source
-orawls::weblogic::remote_file:          false
-

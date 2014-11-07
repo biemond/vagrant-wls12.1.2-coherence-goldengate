@@ -1,104 +1,89 @@
-module Puppet::Parser::Functions
-  newfunction(:osb_cluster_configured, :type => :rvalue) do |args|
+begin
+  require 'puppet/util/log'
 
-    osb_exists = false
+  module Puppet
+    module Parser
+      module Functions
+        newfunction(:osb_cluster_configured, :type => :rvalue) do |args|
 
-    if args[0].nil?
-      return osb_exists
-    else
-      wlsDomain = args[0].strip.downcase
-    end
+          osb_exists = false
 
-    if args[1].nil?
-      return osb_exists
-    else
-      target = args[1].strip.downcase
-    end
+          if args[0].nil?
+            return osb_exists
+          else
+            fullDomainPath = args[0].strip.downcase
+          end
+          log "osb_cluster_configured fullDomainPath is #{fullDomainPath}"
 
-    if args[2].nil?
-      return osb_exists
-    else
-      wlsversion = args[2]
-    end
+          if args[1].nil?
+            return osb_exists
+          else
+            target = args[1].strip.downcase
+          end
+          log "osb_cluster_configured target is #{target}"
 
-    if wlsversion == 1212
-      versionStr = "_1212"
-    else
-      versionStr = ""
-    end
+          prefix = 'ora_mdw_domain'
 
-    prefix = "ora_mdw"+versionStr
+          # check the middleware home
+          domain_count = lookup_wls_var(prefix + '_cnt')
+          if domain_count == 'empty'
+            return art_exists
+          else
+            n = 0
+            while n < domain_count.to_i
 
-    # check the middleware home
-    mdw_count = lookupWlsVar(prefix+'_cnt')
-    if mdw_count  == "empty"
-      return osb_exists
-    else
-      # check the all mdw home
-      i = 0
-      while ( i < mdw_count.to_i)
-
-        if wlsVarExists(prefix+'_'+i.to_s)
-          
-          mdw = lookupWlsVar(prefix+'_'+i.to_s)
-          mdw = mdw.strip.downcase
-
-          # how many domains are there in this mdw home
-          domain_count = lookupWlsVar(prefix+'_'+i.to_s+'_domain_cnt')
-          n = 0
-          while ( n < domain_count.to_i )
-
-            # lookup up domain
-            if wlsVarExists(prefix+'_'+i.to_s+'_domain_'+n.to_s)
-              domain = lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s)
-              domain = domain.strip.downcase
-
-              # do we found the right domain
-              if domain == wlsDomain
-                osb =  lookupWlsVar(prefix+'_'+i.to_s+'_domain_'+n.to_s+'_osb')
-                unless osb == "empty"
-                  osb = osb.strip.downcase   
-                  if osb.include? target
-                    return true
+              # lookup up domain
+              domain = lookup_wls_var(prefix + '_' + n.to_s)
+              log "osb_cluster_configured found domain is #{domain}"
+              unless domain == 'empty'
+                domain = domain.strip.downcase
+                # do we found the right domain
+                log "osb_cluster_configured compare domain #{domain} with #{fullDomainPath}"
+                if domain == fullDomainPath
+                  osb =  lookup_wls_var(prefix + '_' + n.to_s + '_osb')
+                  log "osb_cluster_configured osb target is #{osb}"
+                  unless osb == 'empty'
+                    osb = osb.strip.downcase
+                    if osb.include? target
+                      log 'osb_cluster_configured return true'
+                      return true
+                    end
                   end
                 end
+              end
+              n += 1
+            end
+          end
 
-              end  # domain_path equal
-            end # domain not nil
-            n += 1
-
-          end  # while domain
-
+          return osb_exists
         end
-        i += 1
-      end # while mdw
-
-    end # mdw count
-
-    return osb_exists
-  end
-end
-
-
-
-def lookupWlsVar(name)
-  #puts "lookup fact "+name
-  if wlsVarExists(name)
-    return lookupvar(name).to_s
-  end
-  #puts "return empty"
-  return "empty"
-end
-
-def wlsVarExists(name)
-  #puts "lookup fact "+name
-  if lookupvar(name) != :undefined
-    if lookupvar(name).nil?
-      #puts "return false"
-      return false
+      end
     end
-    return true 
   end
-  #puts "not found"
-  return false 
-end   
+
+  def lookup_wls_var(name)
+    if wls_var_exists(name)
+      return lookupvar(name).to_s
+    end
+    'empty'
+  end
+
+  def wls_var_exists(name)
+    if lookupvar(name) != :undefined
+      if lookupvar(name).nil?
+        return false
+      end
+      return true
+    end
+    false
+  end
+
+  def log(msg)
+    Puppet::Util::Log.create(
+      :level   => :info,
+      :message => msg,
+      :source  => 'osb_cluster_configured'
+    )
+  end
+
+end

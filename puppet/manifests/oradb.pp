@@ -4,8 +4,8 @@ node 'oradb'  {
    include goldengate_11g
    include oradb_11g
    include oradb_maintenance
- 
-} 
+
+}
 
 # operating settings for Database & Middleware
 class oradb_os {
@@ -21,26 +21,30 @@ class oradb_os {
     hasstatus => true,
   }
 
-  group { 'dba' :
+  $groups = ['oinstall','dba' ,'oper' ]
+
+  group { $groups :
     ensure      => present,
   }
 
   user { 'oracle' :
     ensure      => present,
-    gid         => 'dba',  
-    groups      => 'dba',
+    uid         => 500,
+    gid         => 'oinstall',
+    groups      => $groups,
     shell       => '/bin/bash',
     password    => '$1$DSJ51vh6$4XzzwyIOk6Bi/54kglGk3.',
     home        => "/home/oracle",
     comment     => "This user oracle was created by Puppet",
-    require     => Group['dba'],
+    require     => Group[$groups],
     managehome  => true,
   }
 
   user { 'ggate' :
     ensure      => present,
-    gid         => 'dba',  
-    groups      => 'dba',
+    uid         => 501,
+    gid         => 'oinstall',
+    groups      => $groups,
     shell       => '/bin/bash',
     password    => '$1$DSJ51vh6$4XzzwyIOk6Bi/54kglGk3.',
     home        => "/home/ggate",
@@ -49,13 +53,12 @@ class oradb_os {
     managehome  => true,
   }
 
-
-
   $install = [ 'binutils.x86_64', 'compat-libstdc++-33.x86_64', 'glibc.x86_64','ksh.x86_64','libaio.x86_64',
                'libgcc.x86_64', 'libstdc++.x86_64', 'make.x86_64','compat-libcap1.x86_64', 'gcc.x86_64',
                'gcc-c++.x86_64','glibc-devel.x86_64','libaio-devel.x86_64','libstdc++-devel.x86_64',
-               'sysstat.x86_64','unixODBC-devel','glibc.i686','libXext.i686','libXtst.i686']
-       
+               'sysstat.x86_64','unixODBC-devel','glibc.i686','libXext.x86_64','libXtst.x86_64']
+
+
 
   package { $install:
     ensure  => present,
@@ -70,7 +73,7 @@ class oradb_os {
                     },
          use_hiera => false,
   }
- 
+
   sysctl { 'kernel.msgmnb':                 ensure => 'present', permanent => 'yes', value => '65536',}
   sysctl { 'kernel.msgmax':                 ensure => 'present', permanent => 'yes', value => '65536',}
   sysctl { 'kernel.shmmax':                 ensure => 'present', permanent => 'yes', value => '2588483584',}
@@ -97,80 +100,79 @@ class oradb_11g {
   require oradb_os
 
     oradb::installdb{ '11.2_linux-x64':
-            version                => '11.2.0.4',
-            file                   => 'p13390677_112040_Linux-x86-64',
-            databaseType           => 'SE',
-            oracleBase             => hiera('oracle_base_dir'),
-            oracleHome             => hiera('oracle_home_dir'),
-            userBaseDir            => '/home',
-            createUser             => false,
-            user                   => hiera('oracle_os_user'),
-            group                  => hiera('oracle_os_group'),
-            downloadDir            => hiera('oracle_download_dir'),
-            remoteFile             => false,
-            puppetDownloadMntPoint => hiera('oracle_source'),  
+      version                => '11.2.0.4',
+      file                   => 'p13390677_112040_Linux-x86-64',
+      databaseType           => 'SE',
+      oracleBase             => hiera('oracle_base_dir'),
+      oracleHome             => hiera('oracle_home_dir'),
+      userBaseDir            => '/home',
+      createUser             => false,
+      user                   => hiera('oracle_os_user'),
+      group                  => 'dba',
+      group_install          => 'oinstall',
+      group_oper             => 'oper',
+      downloadDir            => hiera('oracle_download_dir'),
+      remoteFile             => false,
+      puppetDownloadMntPoint => hiera('oracle_source'),
     }
 
-   oradb::net{ 'config net8':
-            oracleHome   => hiera('oracle_home_dir'),
-            version      => hiera('oracle_version'),
-            user         => hiera('oracle_os_user'),
-            group        => hiera('oracle_os_group'),
-            downloadDir  => hiera('oracle_download_dir'),
-            require      => Oradb::Installdb['11.2_linux-x64'],
-   }
+    oradb::net{ 'config net8':
+      oracleHome   => hiera('oracle_home_dir'),
+      version      => '11.2',
+      user         => hiera('oracle_os_user'),
+      group        => hiera('oracle_os_group'),
+      downloadDir  => hiera('oracle_download_dir'),
+      require      => Oradb::Installdb['11.2_linux-x64'],
+    }
 
-   oradb::listener{'start listener':
-            oracleBase   => hiera('oracle_base_dir'),
-            oracleHome   => hiera('oracle_home_dir'),
-            user         => hiera('oracle_os_user'),
-            group        => hiera('oracle_os_group'),
-            action       => 'start',  
-            require      => Oradb::Net['config net8'],
-   }
+    oradb::listener{'start listener':
+      oracleBase   => hiera('oracle_base_dir'),
+      oracleHome   => hiera('oracle_home_dir'),
+      user         => hiera('oracle_os_user'),
+      group        => hiera('oracle_os_group'),
+      action       => 'start',
+      require      => Oradb::Net['config net8'],
+    }
 
-   # alter system set xxx scope= spfile|both 
-   # enable_goldengate_replication=true,undo_management=auto,undo_retention=86400
-   oradb::database{ 'oraDb': 
-                    oracleBase              => hiera('oracle_base_dir'),
-                    oracleHome              => hiera('oracle_home_dir'),
-                    version                 => hiera('oracle_version'),
-                    user                    => hiera('oracle_os_user'),
-                    group                   => hiera('oracle_os_group'),
-                    downloadDir             => hiera('oracle_download_dir'),
-                    action                  => 'create',
-                    dbName                  => hiera('oracle_database_name'),
-                    dbDomain                => hiera('oracle_database_domain_name'),
-                    sysPassword             => hiera('oracle_database_sys_password'),
-                    systemPassword          => hiera('oracle_database_system_password'),
-                    dataFileDestination     => "/oracle/oradata",
-                    recoveryAreaDestination => "/oracle/flash_recovery_area",
-                    characterSet            => "AL32UTF8",
-                    nationalCharacterSet    => "UTF8",
-                    initParams              => "open_cursors=1000,processes=600,job_queue_processes=4,compatible='11.2.0.4'",
-                    sampleSchema            => 'TRUE',
-                    memoryPercentage        => "40",
-                    memoryTotal             => "800",
-                    databaseType            => "MULTIPURPOSE",                         
-                    require                 => Oradb::Listener['start listener'],
-   }
+    oradb::database{ 'oraDb':
+      oracleBase              => hiera('oracle_base_dir'),
+      oracleHome              => hiera('oracle_home_dir'),
+      version                 => '11.2',
+      user                    => hiera('oracle_os_user'),
+      group                   => hiera('oracle_os_group'),
+      downloadDir             => hiera('oracle_download_dir'),
+      action                  => 'create',
+      dbName                  => hiera('oracle_database_name'),
+      dbDomain                => hiera('oracle_database_domain_name'),
+      sysPassword             => hiera('oracle_database_sys_password'),
+      systemPassword          => hiera('oracle_database_system_password'),
+      dataFileDestination     => "/oracle/oradata",
+      recoveryAreaDestination => "/oracle/flash_recovery_area",
+      characterSet            => "AL32UTF8",
+      nationalCharacterSet    => "UTF8",
+      initParams              => "open_cursors=1000,processes=600,job_queue_processes=4,compatible='11.2.0.4'",
+      sampleSchema            => 'FALSE',
+      memoryPercentage        => "40",
+      memoryTotal             => "800",
+      databaseType            => "MULTIPURPOSE",
+      require                 => Oradb::Listener['start listener'],
+    }
 
-   oradb::dbactions{ 'start oraDb': 
-                   oracleHome              => hiera('oracle_home_dir'),
-                   user                    => hiera('oracle_os_user'),
-                   group                   => hiera('oracle_os_group'),
-                   action                  => 'start',
-                   dbName                  => hiera('oracle_database_name'),
-                   require                 => Oradb::Database['oraDb'],
-   }
+    oradb::dbactions{ 'start oraDb':
+      oracleHome              => hiera('oracle_home_dir'),
+      user                    => hiera('oracle_os_user'),
+      group                   => hiera('oracle_os_group'),
+      action                  => 'start',
+      dbName                  => hiera('oracle_database_name'),
+      require                 => Oradb::Database['oraDb'],
+    }
 
-   oradb::autostartdatabase{ 'autostart oracle': 
-                   oracleHome              => hiera('oracle_home_dir'),
-                   user                    => hiera('oracle_os_user'),
-                   dbName                  => hiera('oracle_database_name'),
-                   require                 => Oradb::Dbactions['start oraDb'],
-   }
-
+    oradb::autostartdatabase{ 'autostart oracle':
+      oracleHome              => hiera('oracle_home_dir'),
+      user                    => hiera('oracle_os_user'),
+      dbName                  => hiera('oracle_database_name'),
+      require                 => Oradb::Dbactions['start oraDb'],
+    }
 
 
 }
@@ -178,28 +180,18 @@ class oradb_11g {
 class goldengate_11g {
    require oradb_11g
 
-      file { "/oracle/product" :
-        ensure        => directory,
-        recurse       => false,
-        replace       => false,
-        mode          => 0775,
-        owner         => hiera('oracle_os_user'),
-        group         => hiera('oracle_os_group'),
-      }
-
       file { "/oracle/product/12.1.2" :
         ensure        => directory,
         recurse       => false,
         replace       => false,
         mode          => 0775,
         owner         => 'ggate',
-        group         => hiera('oracle_os_group'),
+        group         => 'oinstall',
       }
-
 
       oradb::goldengate{ 'ggate12.1.2':
                          version                 => '12.1.2',
-                         file                    => '121200_fbo_ggs_Linux_x64_shiphome.zip',
+                         file                    => '121210_fbo_ggs_Linux_x64_shiphome.zip',
                          databaseType            => 'Oracle',
                          databaseVersion         => 'ORA11g',
                          databaseHome            => hiera('oracle_home_dir'),
@@ -207,22 +199,11 @@ class goldengate_11g {
                          goldengateHome          => "/oracle/product/12.1.2/ggate",
                          managerPort             => 16000,
                          user                    => hiera('ggate_os_user'),
-                         group                   => hiera('oracle_os_group'),
+                         group                   => 'oinstall',
                          downloadDir             => '/install',
                          puppetDownloadMntPoint  =>  hiera('oracle_source'),
-                         require                 => [File["/oracle/product"],File["/oracle/product/12.1.2"]]
+                         require                 => File["/oracle/product/12.1.2"],
       }
-
-      file { "/oracle/product/12.1.2/ggate/OPatch" :
-        ensure        => directory,
-        recurse       => true,
-        replace       => false,
-        mode          => 0775,
-        owner         => hiera('ggate_os_user'),
-        group         => hiera('oracle_os_group'),
-        require       => Oradb::Goldengate['ggate12.1.2'],
-      }
-
 
 }
 
@@ -231,10 +212,10 @@ class oradb_maintenance {
   require oradb_11g
 
   case $operatingsystem {
-    CentOS, RedHat, OracleLinux, Ubuntu, Debian: { 
+    CentOS, RedHat, OracleLinux, Ubuntu, Debian: {
       $mtimeParam = "1"
     }
-    Solaris: { 
+    Solaris: {
       $mtimeParam = "+1"
     }
   }
@@ -246,7 +227,7 @@ class oradb_maintenance {
     hour    => 06,
     minute  => 34,
   }
-  
+
   cron { 'oracle_db_lsinv' :
     command => "find /oracle/product/11.2/db/cfgtoollogs/opatch/lsinv -name 'lsinventory*.txt' -mtime ${mtimeParam} -exec rm {} \\; >> /tmp/opatch_lsinv_db_purge.log 2>&1",
     user    => oracle,

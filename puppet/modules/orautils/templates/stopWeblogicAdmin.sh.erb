@@ -1,16 +1,25 @@
-#<%= @shell %>
+#!<%= @shell %>
 # *************************************************************************
-osWlHome=<%= @osWlHome %>
-osDomain=<%= @osDomain %>
-osDomainPath=<%= @osDomainPath %>
-nodeMgrPort=<%= @nodeMgrPort %>
-hostname=localhost
-user=<%= @wlsUser %>
-password=<%= @wlsPassword %>
-wlsAdminServer=<%= @wlsAdminServer %>
+osWlHome=<%= @osWlHomeParam %>
+osDomain=<%= @osDomainParam %>
+osDomainPath=<%= @osDomainPathParam %>
+nodeMgrPort=<%= @nodeMgrPortParam %>
+hostname=<%= @nodeMgrAddressParam %>
+user=<%= @wlsUserParam %>
+password=<%= @wlsPasswordParam %>
+wlsAdminServer=<%= @wlsAdminServerParam %>
+
+<% if @jsseEnabledParam == true %>
+export CONFIG_JVM_ARGS='-Dweblogic.ssl.JSSEEnabled=true -Dweblogic.security.SSL.enableJSSE=true <%= @trust_env %>'
+<% else %>
+export CONFIG_JVM_ARGS='-Dweblogic.ssl.JSSEEnabled=false -Dweblogic.security.SSL.enableJSSE=false <%= @trust_env %>'
+<% end %>
 
 echo "Stopping Weblogic ${wlsAdminServer} for domain ${osDomain}...."
 echo "Checking if Weblogic ${wlsAdminServer} for domain ${osDomain} is up...."
+echo "CONFIG_JVM_ARGS ${CONFIG_JVM_ARGS}"
+
+
 unamestr=`uname`
 if [[ "$unamestr" == 'SunOS' ]]; then
    checkStmt='/usr/ucb/ps wwxa'
@@ -18,13 +27,12 @@ else
    checkStmt='/bin/ps -eo pid,cmd'
 fi
 
-
-pid=`${checkStmt} | /bin/grep -i AdminServer | /bin/grep -v grep | awk '{print $1}'`
+pid=`${checkStmt} | /bin/grep -i ${wlsAdminServer} | /bin/grep -i ${osDomain} | /bin/grep -v grep | awk '{print $1}'`
 nodePid=`${checkStmt} | /bin/grep -i nodemanager.javahome | /bin/grep -v grep | awk '{print $1}'`
 
-if [ ${pid} ]
+if [[ ${pid} ]]
 then
-  if [ ${nodePid} ]
+  if [[ ${nodePid} ]]
   then
     echo "The Weblogic ${wlsAdminServer} for domain ${osDomain} is running.. Stopping ${wlsAdminServer} NOW...."
     $osWlHome/common/bin/wlst.sh <<-EOF
@@ -32,6 +40,7 @@ nmConnect('${user}','${password}','${hostname}','${nodeMgrPort}','${osDomain}','
 nmKill('${wlsAdminServer}')
 nmDisconnect() 
 EOF
+
 
   else
     echo "NodeManager is not running on this machine ${hostname}" 
@@ -41,4 +50,3 @@ else
   echo "The Weblogic ${wlsAdminServer} for domain ${osDomain} is NOT running...."
 fi
 echo "Done...."
-

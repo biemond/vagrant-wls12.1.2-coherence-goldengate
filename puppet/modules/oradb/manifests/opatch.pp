@@ -16,101 +16,114 @@
 #  }
 #
 #
-define oradb::opatch( $oracleProductHome       = undef,
-                      $patchId                 = undef,
-                      $patchFile               = undef,
-                      $user                    = 'oracle',
-                      $group                   = 'dba',
-                      $downloadDir             = '/install',
-                      $ocmrf                   = true,
-                      $puppetDownloadMntPoint  = undef,
-                      $remoteFile              = true,
+define oradb::opatch(
+  $ensure                  = 'present',  #present|absent
+  $oracleProductHome       = undef,
+  $patchId                 = undef,
+  $patchFile               = undef,
+  $clusterWare             = false,
+  $bundleSubPatchId        = undef,
+  $user                    = 'oracle',
+  $group                   = 'dba',
+  $downloadDir             = '/install',
+  $ocmrf                   = false,
+  $puppetDownloadMntPoint  = undef,
+  $remoteFile              = true,
 )
 
 {
-  case $::kernel {
-    Linux, SunOS: {
-      $execPath      = '/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:'
-      $path          = $downloadDir
+  $execPath = '/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:'
 
-      Exec { path    => $execPath,
-        user         => $user,
-        group        => $group,
-        logoutput    => true,
+  case $::kernel {
+    'Linux': {
+      $oraInstPath = '/etc'
+    }
+    'SunOS': {
+      $oraInstPath = '/var/opt/oracle'
+    }
+    default: {
+        fail("Unrecognized operating system ${::kernel}, please use it on a Linux host")
+    }
+  }
+
+  if $puppetDownloadMntPoint == undef {
+    $mountPoint = 'puppet:///modules/oradb/'
+  } else {
+    $mountPoint =  $puppetDownloadMntPoint
+  }
+
+  if $ensure == 'present' {
+    if $remoteFile == true {
+      # the patch used by the opatch
+      if ! defined(File["${downloadDir}/${patchFile}"]) {
+        file { "${downloadDir}/${patchFile}":
+          ensure => present,
+          source => "${mountPoint}/${patchFile}",
+          mode   => '0775',
+          owner  => $user,
+          group  => $group,
+        }
       }
-      File {
-        ensure       => present,
-        mode         => 0775,
-        owner        => $user,
-        group        => $group,
+    }
+  }
+
+  case $::kernel {
+    'Linux', 'SunOS': {
+      if $ensure == 'present' {
+        if $remoteFile == true {
+          exec { "extract opatch ${patchFile} ${title}":
+            command   => "unzip -n ${downloadDir}/${patchFile} -d ${downloadDir}",
+            require   => File["${downloadDir}/${patchFile}"],
+            creates   => "${downloadDir}/${patchId}",
+            path      => $execPath,
+            user      => $user,
+            group     => $group,
+            logoutput => false,
+            before    => Db_opatch["${patchId} ${title}"],
+          }
+        } else {
+          exec { "extract opatch ${patchFile} ${title}":
+            command   => "unzip -n ${mountPoint}/${patchFile} -d ${downloadDir}",
+            creates   => "${downloadDir}/${patchId}",
+            path      => $execPath,
+            user      => $user,
+            group     => $group,
+            logoutput => false,
+            before    => Db_opatch["${patchId} ${title}"],
+          }
+        }
+      }
+      if $ocmrf == true {
+
+        db_opatch{ "${patchId} ${title}":
+          ensure                  => $ensure,
+          patch_id                => $patchId,
+          os_user                 => $user,
+          oracle_product_home_dir => $oracleProductHome,
+          orainst_dir             => $oraInstPath,
+          extracted_patch_dir     => "${downloadDir}/${patchId}",
+          ocmrf_file              => "${oracleProductHome}/OPatch/ocm.rsp",
+          bundle_sub_patch_id     => $bundleSubPatchId,
+          clusterware             => $clusterWare,
+        }
+
+      } else {
+
+        db_opatch{ "${patchId} ${title}":
+          ensure                  => $ensure,
+          patch_id                => $patchId,
+          os_user                 => $user,
+          oracle_product_home_dir => $oracleProductHome,
+          orainst_dir             => $oraInstPath,
+          extracted_patch_dir     => "${downloadDir}/${patchId}",
+          bundle_sub_patch_id     => $bundleSubPatchId,
+          clusterware             => $clusterWare,
+        }
+
       }
     }
     default: {
-      fail("Unrecognized operating system")
-    }
-  }
-
-  # check if the opatch already is installed
-  $found = opatch_exists($oracleProductHome,$patchId)
-  if $found == undef {
-    $continue = true
-  } else {
-    if ( $found ) {
-      $continue = false
-    } else {
-      notify {"oradb::opatch ${title} ${oracleProductHome} does not exists":}
-      $continue = true
-    }
-  }
-
-  if ( $continue ) {
-    if $puppetDownloadMntPoint == undef {
-      $mountPoint    = "puppet:///modules/oradb/"
-    } else {
-      $mountPoint    =	$puppetDownloadMntPoint
-    }
-
-    if $remoteFile == true {
-	    # the patch used by the opatch
-	    if ! defined(File["${path}/${patchFile}"]) {
-	      file { "${path}/${patchFile}":
-	        source       => "${mountPoint}/${patchFile}",
-	      }
-	    }
-    }
-
-    # opatch apply -silent -oh /oracle/product/11.2/db /install/14389126
-    $oPatchCommand   = "opatch apply -silent "
-
-    case $::kernel {
-      Linux, SunOS: {
-        if $remoteFile == true {
-	        exec { "extract opatch ${patchFile} ${title}":
-	          command    => "unzip -n ${path}/${patchFile} -d ${path}",
-	          require    => File ["${path}/${patchFile}"],
-	          creates    => "${path}/${patchId}",
-	        }
-        } else {
-          exec { "extract opatch ${patchFile} ${title}":
-            command    => "unzip -n ${mountPoint}/${patchFile} -d ${path}",
-            creates    => "${path}/${patchId}",
-          }
-        }
-        if $ocmrf == true {
-          exec { "exec opatch ux ocmrf ${title}":
-            command  => "${oracleProductHome}/OPatch/${oPatchCommand} -ocmrf ${oracleProductHome}/OPatch/ocm.rsp -oh ${oracleProductHome} ${path}/${patchId}",
-            require  => Exec["extract opatch ${patchFile} ${title}"],
-          }
-        } else {
-          exec { "exec opatch ux ${title}":
-            command  => "${oracleProductHome}/OPatch/${oPatchCommand} -oh ${oracleProductHome} ${path}/${patchId}",
-            require  => Exec["extract opatch ${patchFile} ${title}"],
-          }
-        }
-      }
-      default: {
-        fail("Unrecognized operating system")
-      }
+      fail('Unrecognized operating system')
     }
   }
 }

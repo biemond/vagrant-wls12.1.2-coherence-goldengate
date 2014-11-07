@@ -4,112 +4,133 @@
 # action        =  createDatabase|deleteDatabase
 # databaseType  = MULTIPURPOSE|DATA_WAREHOUSING|OLTP
 #
-#
-#  oradb::database{ 'testDb':
-#                   oracleBase              => '/oracle',
-#                   oracleHome              => '/oracle/product/11.2/db',
-#                   user                    => 'oracle',
-#                   group                   => 'dba',
-#                   downloadDir             => '/install',
-#                   action                  => 'create',
-#                   dbName                  => 'test',
-#                   dbDomain                => 'oracle.com',
-#                   sysPassword             => 'Welcome01',
-#                   systemPassword          => 'Welcome01',
-#                   dataFileDestination     => "/oracle/oradata",
-#                   recoveryAreaDestination => "/oracle/flash_recovery_area",
-#                   characterSet            => "AL32UTF8",
-#                   nationalCharacterSet    => "UTF8",
-#                   initParams              => "open_cursors=1000,processes=600,job_queue_processes=4,compatible=11.2.0.0.0",
-#                   sampleSchema            => 'TRUE',
-#                   memoryPercentage        => "40",
-#                   memoryTotal             => "800",
-#                   databaseType            => "MULTIPURPOSE",
-#                   require                 => Oradb::Listener['start listener'],
-#  }
-#
-#
-#
-define oradb::database( $oracleBase               = undef,
-                        $oracleHome               = undef,
-                        $version                  = "11.2",
-                        $user                     = 'oracle',
-                        $group                    = 'dba',
-                        $downloadDir              = '/install',
-                        $action                   = 'create',
-                        $dbName                   = 'orcl',
-                        $dbDomain                 = 'oracle.com',
-                        $sysPassword              = 'Welcome01',
-                        $systemPassword           = 'Welcome01',
-                        $dataFileDestination      = undef,
-                        $recoveryAreaDestination  = undef,
-                        $characterSet             = "AL32UTF8",
-                        $nationalCharacterSet     = "UTF8",
-                        $initParams               = undef,
-                        $sampleSchema             = TRUE,
-                        $memoryPercentage         = "40",
-                        $memoryTotal              = "800",
-                        $databaseType             = "MULTIPURPOSE",
-)
-
-{
-  if $version == "11.2" or $version == "12.1" {
-  } else {
-    fail("Unrecognized version")
+define oradb::database(
+  $oracleBase               = undef,
+  $oracleHome               = undef,
+  $version                  = '11.2',
+  $user                     = 'oracle',
+  $group                    = 'dba',
+  $downloadDir              = '/install',
+  $action                   = 'create',
+  $template                 = undef,
+  $dbName                   = 'orcl',
+  $dbDomain                 = undef,
+  $dbPort                   = '1521',
+  $sysPassword              = 'Welcome01',
+  $systemPassword           = 'Welcome01',
+  $dataFileDestination      = undef,
+  $recoveryAreaDestination  = undef,
+  $characterSet             = 'AL32UTF8',
+  $nationalCharacterSet     = 'UTF8',
+  $initParams               = undef,
+  $sampleSchema             = TRUE,
+  $memoryPercentage         = '40',
+  $memoryTotal              = '800',
+  $databaseType             = 'MULTIPURPOSE',
+  $emConfiguration          = 'NONE',  # CENTRAL|LOCAL|ALL|NONE
+  $storageType              = 'FS', #FS|CFS|ASM
+  $asmSnmpPassword          = 'Welcome01',
+  $dbSnmpPassword           = 'Welcome01',
+  $asmDiskgroup             = 'DATA',
+  $recoveryDiskgroup        = undef,
+  $cluster_nodes            = undef,
+){
+  if (!( $version in ['11.2','12.1'])) {
+    fail('Unrecognized version')
   }
+
+  if $action == 'create' {
+    $operationType = 'createDatabase'
+  } elsif $action == 'delete' {
+    $operationType = 'deleteDatabase'
+  } else {
+    fail('Unrecognized database action')
+  }
+
+  if (!( $databaseType in ['MULTIPURPOSE','DATA_WAREHOUSING','OLTP'])) {
+    fail('Unrecognized databaseType')
+  }
+
+  if (!( $emConfiguration in ['NONE','CENTRAL','LOCAL','ALL'])) {
+    fail('Unrecognized emConfiguration')
+  }
+
+  if (!( $storageType in ['FS','CFS','ASM'])) {
+    fail('Unrecognized storageType')
+  }
+
   $continue = true
 
   if ( $continue ) {
     case $::kernel {
-      Linux,SunOS: {
+      'Linux', 'SunOS': {
         $execPath    = "${oracleHome}/bin:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:"
         $path        = $downloadDir
-        Exec { path  => $execPath,
-          user       => $user,
-          group      => $group,
-          logoutput  => true,
-        }
-        File {
-          ensure     => present,
-          mode       => 0775,
-          owner      => $user,
-          group      => $group,
-        }
       }
       default: {
-        fail("Unrecognized operating system")
+        fail('Unrecognized operating system')
       }
     }
 
-    if $action == 'create' {
-      $operationType = 'createDatabase'
-    } elsif $action == 'delete' {
-      $operationType = 'deleteDatabase'
+    $sanitized_title = regsubst($title, '[^a-zA-Z0-9.-]', '_', 'G')
+
+    $filename = "${path}/database_${sanitized_title}.rsp"
+
+    if $dbDomain {
+      $globalDbName = "${dbName}.${dbDomain}"
     } else {
-      fail("Unrecognized database action")
+      $globalDbName = $dbName
     }
 
-    $globalDbName    = "${dbName}.${dbDomain}"
-    if ! defined(File["${path}/database_${title}.rsp"]) {
-      file { "${path}/database_${title}.rsp":
-        ensure       => present,
-        content      => template("oradb/dbca_${version}.rsp.erb"),
+    if ! defined(File[$filename]) {
+      file { $filename:
+        ensure  => present,
+        content => template("oradb/dbca_${version}.rsp.erb"),
+        mode    => '0775',
+        owner   => $user,
+        group   => $group,
+        before  => Exec["oracle database ${title}"],
+      }
+    }
+
+    if ( $template ) {
+      $templatename = "${path}/${template}_${sanitized_title}.dbt"
+      file { $templatename:
+        ensure  => present,
+        content => template("oradb/${template}.dbt.erb"),
+        mode    => '0775',
+        owner   => $user,
+        group   => $group,
+        before  => Exec["oracle database ${title}"],
       }
     }
 
     if $action == 'create' {
-      exec { "install oracle database ${title}":
-        command      => "dbca -silent -responseFile ${path}/database_${title}.rsp",
-        require      => File["${path}/database_${title}.rsp"],
-        creates      => "${oracleBase}/admin/${dbName}",
-        timeout      => 0,
+      if ( $template ) {
+        $command = "dbca -silent -createDatabase -templateName ${templatename} -gdbname ${globalDbName} -responseFile NO_VALUE -sysPassword ${sysPassword} -systemPassword ${systemPassword}"
+      } else {
+        $command = "dbca -silent -responseFile ${filename}"
+      }
+      exec { "oracle database ${title}":
+        command     => $command,
+        creates     => "${oracleBase}/admin/${dbName}",
+        timeout     => 0,
+        path        => $execPath,
+        user        => $user,
+        group       => $group,
+        environment => ["USER=${user}",],
+        logoutput   => true,
       }
     } elsif $action == 'delete' {
-      exec { "delete oracle database ${title}":
-        command      => "dbca -silent -responseFile ${path}/database_${title}.rsp",
-        require      => File["${path}/database_${title}.rsp"],
-        onlyif       => "ls ${oracleBase}/admin/${dbName}",
-        timeout      => 0,
+      exec { "oracle database ${title}":
+        command     => "dbca -silent -responseFile ${filename}",
+        onlyif      => "ls ${oracleBase}/admin/${dbName}",
+        timeout     => 0,
+        path        => $execPath,
+        user        => $user,
+        group       => $group,
+        environment => ["USER=${user}",],
+        logoutput   => true,
       }
     }
   }

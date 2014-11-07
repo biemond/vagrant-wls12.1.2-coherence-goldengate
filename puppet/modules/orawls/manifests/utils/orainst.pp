@@ -11,18 +11,27 @@ define orawls::utils::orainst
 )
 {
   case $::kernel {
-     Linux: {
-        $oraInstPath        = "/etc"
-     }
-     SunOS: {
-        $oraInstPath        = "/var/opt"
-     }
+    'Linux': {
+      $oraInstPath        = '/etc'
+    }
+    'SunOS': {
+      $oraInstPath        = '/var/opt/oracle'
+      if !defined(File[$oraInstPath]) {
+        file { $oraInstPath:
+          ensure => directory,
+          before => File["${oraInstPath}/oraInst.loc"],
+        }
+      }
+    }
+    default: {
+        fail("Unrecognized operating system ${::kernel}, please use it on a Linux host")
+    }
   }
 
   if !defined(File["${oraInstPath}/oraInst.loc"]) {
     file { "${oraInstPath}/oraInst.loc":
       ensure  => present,
-      content => template("orawls/utils/oraInst.loc.erb"),
+      content => template('orawls/utils/oraInst.loc.erb'),
     }
   }
 }

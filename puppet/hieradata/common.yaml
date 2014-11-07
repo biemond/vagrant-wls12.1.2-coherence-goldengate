@@ -30,13 +30,14 @@ wls_version:              &wls_version              1212
 # global OS vars
 wls_os_user:              &wls_os_user              "oracle"
 wls_os_group:             &wls_os_group             "dba"
-wls_download_dir:         &wls_download_dir         "/data/install"
+wls_download_dir:         &wls_download_dir         "/var/tmp/install"
 wls_source:               &wls_source               "/software"
-wls_jdk_home_dir:         &wls_jdk_home_dir         "/usr/java/jdk1.7.0_45"
-wls_log_dir:              &wls_log_dir              "/data/logs"
+wls_jdk_home_dir:         &wls_jdk_home_dir         "/usr/java/latest"
+wls_log_dir:              &wls_log_dir              "/var/log/weblogic"
 
 
-#WebLogic installation variables 
+
+#WebLogic installation variables
 orawls::weblogic::version:              *wls_version
 orawls::weblogic::filename:             "wls_121200.jar"
 
@@ -51,6 +52,8 @@ orawls::weblogic::os_group:             *wls_os_group
 orawls::weblogic::download_dir:         *wls_download_dir
 orawls::weblogic::source:               *wls_source
 orawls::weblogic::remote_file:          false
+
+wls_jsse_enabled:         true
 
 
 # handy WebLogic scripts in /opt/scripts/wls
@@ -72,4 +75,5 @@ orautils::wlsUserParam:           *wls_weblogic_user
 orautils::wlsPasswordParam:       "weblogic1"
 orautils::wlsAdminServerParam:    "AdminServer"
 
+orautils::jsseEnabledParam:       true
 

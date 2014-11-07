@@ -17,37 +17,37 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     admin.vm.synced_folder "/Users/edwin/software", "/software"
     #admin.vm.synced_folder "."                    , "/vagrant" , type: "nfs"
     #admin.vm.synced_folder "/Users/edwin/software", "/software", type: "nfs"
-  
+
     admin.vm.network :private_network, ip: "10.10.10.10"
-  
+
     admin.vm.provider :virtualbox do |vb|
       vb.customize ["modifyvm", :id, "--memory", "1200"]
       vb.customize ["modifyvm", :id, "--name", "adminwls"]
     end
-  
+
     admin.vm.provision :shell, :inline => "ln -sf /vagrant/puppet/hiera.yaml /etc/puppet/hiera.yaml"
-    
+
     admin.vm.provision :puppet do |puppet|
       puppet.manifests_path    = "puppet/manifests"
       puppet.module_path       = "puppet/modules"
       puppet.manifest_file     = "site.pp"
-      puppet.options           = "--verbose --parser future --hiera_config /vagrant/puppet/hiera.yaml"
-  
+      puppet.options           = "--verbose --trace --hiera_config /vagrant/puppet/hiera.yaml"
+
       puppet.facter = {
         "environment"                     => "development",
         "vm_type"                         => "vagrant",
       }
-      
+
     end
-  
+
   end
-  
+
   config.vm.define "nodewls1" do |node1|
 
     node1.vm.box = "centos-6.5-x86_64"
     #node1.vm.box_url ="/Users/edwin/Downloads/centos-6.5-x86_64.box"
     node1.vm.box_url = "https://dl.dropboxusercontent.com/s/np39xdpw05wfmv4/centos-6.5-x86_64.box"
-  
+
     node1.vm.hostname = "nodewls1.example.com"
 
     node1.vm.synced_folder "."                    , "/vagrant", :mount_options => ["dmode=777","fmode=777"]
@@ -57,25 +57,25 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
 
     node1.vm.network :private_network, ip: "10.10.10.100"
-  
+
     node1.vm.provider :virtualbox do |vb|
       vb.customize ["modifyvm", :id, "--memory", "1024"]
       vb.customize ["modifyvm", :id, "--name", "nodewls1"]
     end
-  
+
     node1.vm.provision :shell, :inline => "ln -sf /vagrant/puppet/hiera.yaml /etc/puppet/hiera.yaml"
-    
+
     node1.vm.provision :puppet do |puppet|
       puppet.manifests_path    = "puppet/manifests"
       puppet.module_path       = "puppet/modules"
       puppet.manifest_file     = "node.pp"
-      puppet.options           = "--verbose --parser future --hiera_config /vagrant/puppet/hiera.yaml"
-  
+      puppet.options           = "--verbose --hiera_config /vagrant/puppet/hiera.yaml"
+
       puppet.facter = {
         "environment"                     => "development",
         "vm_type"                         => "vagrant",
       }
-      
+
     end
 
   end
@@ -94,25 +94,25 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     #node2.vm.synced_folder "/Users/edwin/software", "/software", type: "nfs"
 
     node2.vm.network :private_network, ip: "10.10.10.200", auto_correct: true
-  
+
     node2.vm.provider :virtualbox do |vb|
       vb.customize ["modifyvm", :id, "--memory", "1024"]
       vb.customize ["modifyvm", :id, "--name", "nodewls2"]
     end
-  
+
     node2.vm.provision :shell, :inline => "ln -sf /vagrant/puppet/hiera.yaml /etc/puppet/hiera.yaml"
-    
+
     node2.vm.provision :puppet do |puppet|
       puppet.manifests_path    = "puppet/manifests"
       puppet.module_path       = "puppet/modules"
       puppet.manifest_file     = "node.pp"
-      puppet.options           = "--verbose --parser future --hiera_config /vagrant/puppet/hiera.yaml"
-  
+      puppet.options           = "--verbose --hiera_config /vagrant/puppet/hiera.yaml"
+
       puppet.facter = {
         "environment"                     => "development",
         "vm_type"                         => "vagrant",
       }
-      
+
     end
 
   end
@@ -129,29 +129,29 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     oradb.vm.synced_folder "/Users/edwin/software", "/software"
     #oradb.vm.synced_folder ".", "/vagrant", type: "nfs"
     #oradb.vm.synced_folder "/Users/edwin/software", "/software", type: "nfs"
-  
+
     oradb.vm.provider :virtualbox do |vb|
       vb.customize ["modifyvm"     , :id, "--memory", "2000"]
       vb.customize ["modifyvm"     , :id, "--name"  , "oradb"]
     end
 
-  
+
     oradb.vm.provision :shell, :inline => "ln -sf /vagrant/puppet/hiera.yaml /etc/puppet/hiera.yaml"
-    
+
     oradb.vm.provision :puppet do |puppet|
       puppet.manifests_path    = "puppet/manifests"
       puppet.module_path       = "puppet/modules"
       puppet.manifest_file     = "oradb.pp"
       puppet.options           = "--verbose --hiera_config /vagrant/puppet/hiera.yaml"
-  
+
       puppet.facter = {
         "environment" => "development",
         "vm_type"     => "vagrant",
       }
-      
+
     end
-  
-  end  
+
+  end
 
 
 end

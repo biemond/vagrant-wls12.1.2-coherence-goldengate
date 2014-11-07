@@ -5,43 +5,63 @@ orawls::weblogic::log_output:   true
 
 logoutput:                     &logoutput                     true
 
+wls_os_user:              &wls_os_user              "oracle"
+wls_weblogic_user:        &wls_weblogic_user        "weblogic"
+wls_weblogic_home_dir:    &wls_weblogic_home_dir    "/opt/oracle/middleware12c/wlserver"
+wls_middleware_home_dir:  &wls_middleware_home_dir  "/opt/oracle/middleware12c"
+
+
 # when you have just one domain on a server
-domain_name:                "Wls1212"
-domain_adminserver:         "AdminServer"
-domain_adminserver_address: "10.10.10.10"
-domain_adminserver_port:    7001
-domain_nodemanager_port:    5556
-domain_wls_password:        "weblogic1"
+domain_name:                &domain_name                "Wls1212"
+domain_adminserver:         &domain_adminserver         "AdminServer"
+domain_adminserver_address: &domain_adminserver_address "10.10.10.10"
+domain_adminserver_port:    &domain_adminserver_port    7001
+domain_nodemanager_port:    &domain_nodemanager_port    5556
+domain_wls_password:        &domain_wls_password        "weblogic1"
 domain_user_config_file:    "/home/oracle/oracle-Wls1212-WebLogicConfig.properties"
 domain_user_key_file:       "/home/oracle/oracle-Wls1212-WebLogicKey.properties"
 
+orautils::osDomainParam:          *domain_name
+orautils::osDomainPathParam:      "/opt/oracle/middleware12c/user_projects/domains/Wls1212"
+orautils::nodeMgrPathParam:       "/opt/oracle/middleware12c/user_projects/domains/Wls1212/bin"
+orautils::nodeMgrAddressParam:    *domain_adminserver_address
+orautils::wlsPasswordParam:       *domain_wls_password
+orautils::wlsAdminServerParam:    *domain_adminserver
 
-# create a standard domain
+# create a standard domain with custom identity for the adminserver
 domain_instances:
-  'wlsDomain':
-     domain_template:          "standard"
-     development_mode:         false
-     log_output:               *logoutput
+  'Wls1212':
+    domain_template:                       "standard"
+    development_mode:                      false
+    log_output:                            *logoutput
+
+wls_setting_instances:
+  'default':
+    user:               *wls_os_user
+    weblogic_home_dir:  *wls_weblogic_home_dir
+    connect_url:        "t3://10.10.10.10:7001"
+    weblogic_user:      *wls_weblogic_user
+    weblogic_password:  *domain_wls_password
+    require:            Orawls::Domain[Wls1212]
 
 # pack domains
 pack_domain_instances:
   'wlsDomain':
-     log_output:               *logoutput
-
+    log_output:           *logoutput
 
 # create and startup the nodemanager
 nodemanager_instances:
   'nodemanager':
-     log_output:           *logoutput
-     nodemanager_address:  "10.10.10.10"
+    log_output:                            *logoutput
+    nodemanager_address:                   *domain_adminserver_address
 
 # startup adminserver for extra configuration
 control_instances:
   'startWLSAdminServer':
-     domain_dir:           "/opt/oracle/middleware12c/user_projects/domains/Wls1212"
+     domain_name:          *domain_name
      server_type:          'admin'
      target:               'Server'
-     server:               'AdminServer'
+     server:               *domain_adminserver
      action:               'start'
      log_output:           *logoutput
 
@@ -51,144 +71,179 @@ userconfig_instances:
      log_output:           *logoutput
      user_config_dir:      '/home/oracle'
 
+
 # create 2 machines
 machines_instances:
-  'createMachine_node1':
-     log_output:           *logoutput
-     weblogic_type:        "machine"
-     weblogic_object_name: "Node1"
-     script:               'createMachine.py'
-     params:
-        - "machineName      = 'Node1'"
-        - "machineDnsName   = '10.10.10.100'"
-  'createMachine_node2':
-     log_output:           *logoutput
-     weblogic_type:        "machine"
-     weblogic_object_name: "Node2"
-     script:               'createMachine.py'
-     params:
-        - "machineName      = 'Node2'"
-        - "machineDnsName   = '10.10.10.200'"
+  'Node1':
+    ensure:         'present'
+    listenaddress:  '10.10.10.100'
+    listenport:     '5556'
+    machinetype:    'UnixMachine'
+    nmtype:         'SSL'
+  'Node2':
+    ensure:         'present'
+    listenaddress:  '10.10.10.200'
+    listenport:     '5556'
+    machinetype:    'UnixMachine'
+    nmtype:         'SSL'
 
-datasource_instances:
-
-server_templates_instances:
-  'createServerTemplateCoherence':
-     log_output:           *logoutput
-     weblogic_type:        "server_templates"
-     weblogic_object_name: "serverTemplateCoherence"
-     script:               'createServerTemplateCluster.py'
-     params:
-        - "server_template_name          = 'serverTemplateCoherence'"
-        - "server_template_listen_port   = 7200"
-        - "dynamic_server_name_arguments ='-XX:PermSize=128m -XX:MaxPermSize=256m -Xms512m -Xmx752m'"
-
-cluster_instances:
-    'createDynamicClusterCoherence':
-     log_output:           *logoutput
-     weblogic_type:        "cluster"
-     weblogic_object_name: "dynamicClusterCoherence"
-     script:               'createDynamicCluster.py'
-     params:
-        - "server_template_name       = 'serverTemplateCoherence'"
-        - "dynamic_cluster_name       = 'dynamicClusterCoherence'"
-        - "dynamic_nodemanager_match  = 'Node1,Node2'"
-        - "dynamic_server_name_prefix = 'dynamic_coherence_server_'"
-
-coherence_instances:
-    'createClusterCoherence':
-     log_output:           *logoutput
-     weblogic_type:        "coherence"
-     weblogic_object_name: "clusterCoherence"
-     script:               'createCoherenceCluster.py'
-     params:
-       - "coherence_cluster_name = 'clusterCoherence'"
-       - "target                 = 'dynamicClusterCoherence'"
-       - "targetType             = 'Cluster'"
-       - "storage_enabled        = true"
-       - "unicast_address        = '10.10.10.100,10.10.10.200'"
-       - "unicast_port           = 9099"
-       - "multicast_address      = '231.1.1.1'"
-       - "multicast_port         = 33387"
-       - "machines               = ['10.10.10.100','10.10.10.200']"
+server_vm_args_permsize:      &server_vm_args_permsize     '-XX:PermSize=256m'
+server_vm_args_max_permsize:  &server_vm_args_max_permsize '-XX:MaxPermSize=256m'
+server_vm_args_memory:        &server_vm_args_memory       '-Xms752m'
+server_vm_args_max_memory:    &server_vm_args_max_memory   '-Xmx752m'
 
 
-jmsservers_instances:
-      'jmsServer':
-         weblogic_object_name: "jmsServer"
-         log_output:           *logoutput
-         weblogic_type:        "jmsserver"
-         script:               'createJmsServer.py'
-         params:
-            - "targetType       = 'Server'"
-            - "target           = 'AdminServer'"
-            - "jmsServerName    = 'jmsServer'"
-
-jmsmodules_instances:
-      'jmsModule':
-         log_output:           *logoutput
-         weblogic_type:        "jmsmodule"
-         script:               'createJmsModule.py'
-         weblogic_object_name: "jmsModule"
-         params:
-            - "jmsModuleName    = 'jmsModule'"
-            - "target           = 'AdminServer'"
-            - "targetType       = 'Server'"
-
-subdeployments_instances:
-      'SubDeploymentWLSforJmsModule':
-         weblogic_object_name: "jmsModule/wlsServers"
-         log_output:           *logoutput
-         weblogic_type:        "jmssubdeployment"
-         script:               'createJmsSubDeployment.py'
-         params:
-            - "target           = 'AdminServer'"
-            - "targetType       = 'Server'"
-            - "subName          = 'wlsServers'"
-            - "jmsModuleName    = 'jmsModule'"
-      'SubDeploymentJMSforJmsModule':
-         weblogic_object_name: "jmsModule/jmsServers"
-         log_output:           *logoutput
-         weblogic_type:        "jmssubdeployment"
-         script:               'createJmsSubDeployment.py'
-         params:
-            - "target           = 'jmsServer'"
-            - "targetType       = 'JMSServer'"
-            - "subName          = 'jmsServers'"
-            - "jmsModuleName    = 'jmsModule'"
-
-queues_instances:
-      'createJmsQueueforJmsModule':
-         weblogic_object_name: "Queue"
-         log_output:           *logoutput
-         weblogic_type:        "jmsobject"
-         script:               'createJmsQueueOrTopic.py'
-         params:
-            - "subDeploymentName = 'jmsServers'"
-            - "jmsModuleName     = 'jmsModule'"
-            - "distributed       = 'true'"
-            - "balancingPolicy   = 'Round-Robin'"
-            - "deliveryDelay     = 2000"
-            - "limit             = 3"
-            - "timeToLive        = 300000"
-            - "jmsType           = 'queue'"
-            - "jmsName           = 'HR-Queue'"
-            - "jmsJNDIName       = 'HR-Queue'"
-            - "useLogRedirect    = 'true'"
-            - "loggingPolicy     = '%header%,%properties%'"
+server_template_instances:
+ 'serverTemplateCoherence':
+  ensure:        'present'
+  arguments:
+         - *server_vm_args_permsize
+         - *server_vm_args_max_permsize
+         - *server_vm_args_memory
+         - *server_vm_args_max_memory
+  listenport:    '7200'
+  sslenabled:    '0'
+  ssllistenport: '7201'
 
 
-cf_instances:
-      'createJmsConnectionFactoryforJmsModule':
-         weblogic_object_name: "HR-CF"
-         log_output:           *logoutput
-         weblogic_type:        "jmsobject"
-         script:               'createJmsConnectionFactory.py'
-         params:
-            - "subDeploymentName = 'wlsServers'"
-            - "jmsModuleName     = 'jmsModule'"
-            - "transacted        = 'false'"
-            - "timeout           = 100000"
-            - "cfName            = 'HR-CF'"
-            - "cfJNDIName        = 'HR-CF'"
+dynamic_cluster_instances:
+  'DynamicCluster':
+    ensure:               'present'
+    maximum_server_count: '2'
+    nodemanager_match:    'Node1,Node2'
+    server_name_prefix:   'DynCluster-'
+    server_template_name: 'serverTemplateCoherence'
+    require:
+      - Wls_server_template[serverTemplateCoherence]
+      - Wls_machine[Node1]
+      - Wls_machine[Node2]
 
+
+# todo storage enabled, well known address
+coherence_cluster_instances:
+  'clusterCoherence':
+    ensure:           'present'
+    clusteringmode:   'unicast'
+    multicastaddress: '231.1.1.1'
+    multicastport:    '33387'
+    target:           ['DynamicCluster']
+    targettype:       ['Cluster']
+    unicastport:      '9099'
+    unicastaddress:   '10.10.10.100,10.10.10.200'
+    require:          Wls_dynamic_cluster[DynamicCluster]
+
+# coherence_instances:
+#        - "storage_enabled        = true"
+#        - "unicast_address        = '10.10.10.100,10.10.10.200'"
+#        - "unicast_port           = 9099"
+#        - "machines               = ['10.10.10.100','10.10.10.200']"
+
+
+file_persistence_folders:
+   '/opt/oracle/middleware12c/user_projects/domains/Wls1212/persistence1':
+      ensure:     directory
+      recurse:    false
+      replace:    false
+      mode:       '0775'
+      owner:      'oracle'
+      group:      'dba'
+
+file_persistence_store_instances:
+  'jmsFile1':
+    ensure:         'present'
+    directory:      'persistence1'
+    target:
+      - 'AdminServer'
+    targettype:
+      - 'Server'
+    require:
+      - File[/opt/oracle/middleware12c/user_projects/domains/Wls1212/persistence1]
+
+jmsserver_instances:
+  'jmsServer':
+     ensure:              'present'
+     target:
+       - 'AdminServer'
+     targettype:
+       - 'Server'
+     persistentstore:     'jmsFile1'
+     persistentstoretype: 'FileStore'
+     require:
+       - Wls_file_persistence_store[jmsFile1]
+
+jms_module_instances:
+   'jmsModule':
+     ensure:      'present'
+     target:
+       - 'AdminServer'
+     targettype:
+       - 'Server'
+     require:
+       - Wls_jmsserver[jmsServer]
+
+
+jms_subdeployment_instances:
+   'jmsModule:jmsServers':
+      ensure:     'present'
+      target:
+        - 'jmsServer'
+      targettype:
+        - 'JMSServer'
+      require:
+        - Wls_jms_module[jmsModule]
+        - Wls_jmsserver[jmsServer]
+   'jmsModule:wlsServers':
+      ensure:     'present'
+      target:
+        - 'AdminServer'
+      targettype:
+        - 'Server'
+      require:
+        - Wls_jms_module[jmsModule]
+        - Wls_jmsserver[jmsServer]
+
+jms_queue_instances:
+   'jmsModule:ErrorQueue':
+     ensure:                   'present'
+     distributed:              '0'
+     expirationpolicy:         'Discard'
+     jndiname:                 'jms/ErrorQueue'
+     redeliverydelay:          '-1'
+     redeliverylimit:          '-1'
+     subdeployment:            'jmsServers'
+     defaulttargeting:         '0'
+     timetodeliver:            '-1'
+     timetolive:               '-1'
+     require:
+       - Wls_jms_module[jmsModule]
+       - Wls_jms_subdeployment[jmsModule:jmsServers]
+   'jmsModule:HR-Queue':
+     ensure:                   'present'
+     distributed:              '0'
+     errordestination:         'ErrorQueue'
+     expirationpolicy:         'Redirect'
+     jndiname:                 'HR-Queue'
+     redeliverydelay:          '2000'
+     redeliverylimit:          '3'
+     subdeployment:            'jmsServers'
+     defaulttargeting:         '0'
+     timetodeliver:            '-1'
+     timetolive:               '300000'
+     require:
+       - Wls_jms_module[jmsModule]
+       - Wls_jms_subdeployment[jmsModule:jmsServers]
+       - Wls_jms_queue[jmsModule:ErrorQueue]
+
+
+jms_connection_factory_instances:
+  'jmsModule:HR-CF':
+    ensure:             'present'
+    jmsmodule:          'jmsModule'
+    defaulttargeting:   '0'
+    jndiname:           'HR-CF'
+    subdeployment:      'wlsServers'
+    transactiontimeout: '3600'
+    xaenabled:          '0'
+    require:
+      - Wls_jms_module[jmsModule]
+      - Wls_jms_subdeployment[jmsModule:wlsServers]

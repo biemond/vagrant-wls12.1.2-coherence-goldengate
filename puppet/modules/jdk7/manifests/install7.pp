@@ -13,53 +13,44 @@
 #  set -Djava.security.egd=file:/dev/./urandom param
 #
 define jdk7::install7 (
-  $version              = '7u25',
-  $fullVersion          = 'jdk1.7.0_25',
-  $x64                  = true,
-  $alternativesPriority = 17065,
-  $downloadDir          = '/install',
-  $urandomJavaFix       = true,
-  $sourcePath           = "puppet:///modules/${module_name}/",
+  $version                   = '7u51',
+  $fullVersion               = 'jdk1.7.0_51',
+  $javaHomes                 = '/usr/java',
+  $x64                       = true,
+  $alternativesPriority      = 17065,
+  $downloadDir               = '/install',
+  $cryptographyExtensionFile = undef,
+  $urandomJavaFix            = true,
+  $rsakeySizeFix             = false,  # set true for weblogic 12.1.1 and jdk 1.7 > version 40
+  $sourcePath                = 'puppet:///modules/jdk7/',
 ) {
 
-  if $x64 == true {
+  if ( $x64 == true ) {
     $type = 'x64'
   } else {
     $type = 'i586'
   }
 
   case $::kernel {
-    Linux   : {
-      $installVersion = 'linux'
+    'Linux': {
+      $installVersion   = 'linux'
       $installExtension = '.tar.gz'
-      $path = '/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:'
-      $user = 'root'
-      $group = 'root'
+      $path             = '/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/sbin:'
+      $user             = 'root'
+      $group            = 'root'
     }
-    default : {
-      fail('Unrecognized operating system, please use it on a Linux host')
+    default: {
+      fail("Unrecognized operating system ${::kernel}, please use it on a Linux host")
     }
   }
 
   $jdkfile = "jdk-${version}-${installVersion}-${type}${installExtension}"
 
-  # set the defaults for Exec
-  Exec {
-    path => $path,
-    user => $user,
-  }
-
-  # set the defaults for File
-  File {
-    replace => false,
-    owner   => $user,
-    group   => $group,
-    mode    => 0777,
-  }
-
   exec { "create ${$downloadDir} directory":
     command => "mkdir -p ${$downloadDir}",
     unless  => "test -d ${$downloadDir}",
+    path    => $path,
+    user    => $user,
   }
 
   # check install folder
@@ -67,6 +58,10 @@ define jdk7::install7 (
     file { $downloadDir:
       ensure  => directory,
       require => Exec["create ${$downloadDir} directory"],
+      replace => false,
+      owner   => $user,
+      group   => $group,
+      mode    => '0777',
     }
   }
 
@@ -75,24 +70,62 @@ define jdk7::install7 (
     ensure  => file,
     source  => "${sourcePath}/${jdkfile}",
     require => File[$downloadDir],
+    replace => false,
+    owner   => $user,
+    group   => $group,
+    mode    => '0777',
+  }
+
+  if ( $cryptographyExtensionFile != undef ) {
+    file { "${downloadDir}/${cryptographyExtensionFile}":
+      ensure  => file,
+      source  => "${sourcePath}/${cryptographyExtensionFile}",
+      require => File[$downloadDir],
+      before  => File["${downloadDir}/${jdkfile}"],
+      replace => false,
+      owner   => $user,
+      group   => $group,
+      mode    => '0777',
+    }
   }
 
   # install on client
-  javaexec { "jdkexec ${title} ${version}":
-    path                 => $downloadDir,
-    fullVersion          => $fullVersion,
-    jdkfile              => $jdkfile,
-    alternativesPriority => $alternativesPriority,
-    user                 => $user,
-    group                => $group,
-    require              => File["${downloadDir}/${jdkfile}"],
+  jdk7::javaexec { "jdkexec ${title} ${version}":
+    path                      => $downloadDir,
+    fullVersion               => $fullVersion,
+    javaHomes                 => $javaHomes,
+    jdkfile                   => $jdkfile,
+    cryptographyExtensionFile => $cryptographyExtensionFile,
+    alternativesPriority      => $alternativesPriority,
+    user                      => $user,
+    group                     => $group,
+    require                   => File["${downloadDir}/${jdkfile}"],
   }
 
   if ($urandomJavaFix == true) {
     exec { "set urandom ${fullVersion}":
-      command => "sed -i -e's/securerandom.source=file:\\/dev\\/urandom/securerandom.source=file:\\/dev\\/.\\/urandom/g' /usr/java/${fullVersion}/jre/lib/security/java.security",
-      unless  => "grep '^securerandom.source=file:/dev/./urandom' /usr/java/${fullVersion}/jre/lib/security/java.security",
-      require => Javaexec["jdkexec ${title} ${version}"],
+      command => "sed -i -e's/securerandom.source=file:\\/dev\\/urandom/securerandom.source=file:\\/dev\\/.\\/urandom/g' ${javaHomes}/${fullVersion}/jre/lib/security/java.security",
+      unless  => "grep '^securerandom.source=file:/dev/./urandom' ${javaHomes}/${fullVersion}/jre/lib/security/java.security",
+      require => Jdk7::Javaexec["jdkexec ${title} ${version}"],
+      path    => $path,
+      user    => $user,
+    }
+  }
+  if ($rsakeySizeFix == true) {
+    exec { "sleep 3 sec for urandomJavaFix ${fullVersion}":
+      command => '/bin/sleep 3',
+      unless  => "grep 'RSA keySize < 512' ${javaHomes}/${fullVersion}/jre/lib/security/java.security",
+      require => Jdk7::Javaexec["jdkexec ${title} ${version}"],
+      path    => $path,
+      user    => $user,
+    }
+    exec { "set RSA keySize ${fullVersion}":
+      command     => "sed -i -e's/RSA keySize < 1024/RSA keySize < 512/g' ${javaHomes}/${fullVersion}/jre/lib/security/java.security",
+      unless      => "grep 'RSA keySize < 512' ${javaHomes}/${fullVersion}/jre/lib/security/java.security",
+      subscribe   => Exec["sleep 3 sec for urandomJavaFix ${fullVersion}"],
+      refreshonly => true,
+      path        => $path,
+      user        => $user,
     }
   }
 }
