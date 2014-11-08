@@ -130,14 +130,8 @@ coherence_cluster_instances:
     targettype:       ['Cluster']
     unicastport:      '9099'
     unicastaddress:   '10.10.10.100,10.10.10.200'
+    storage_enabled:  '1'
     require:          Wls_dynamic_cluster[DynamicCluster]
-
-# coherence_instances:
-#        - "storage_enabled        = true"
-#        - "unicast_address        = '10.10.10.100,10.10.10.200'"
-#        - "unicast_port           = 9099"
-#        - "machines               = ['10.10.10.100','10.10.10.200']"
-
 
 file_persistence_folders:
    '/opt/oracle/middleware12c/user_projects/domains/Wls1212/persistence1':
