@@ -378,18 +378,18 @@ class pack_domain{
 }
 
 class goldengate_11g {
-   require orawls::weblogic,os
+  require orawls::weblogic,os
 
-      oradb::goldengate{ 'ggate11.2.1_java':
-                         version                 => '11.2.1',
-                         file                    => 'V38714-01.zip',
-                         tarFile                 => 'ggs_Adapters_Linux_x64.tar',
-                         goldengateHome          => "/opt/oracle/ggate_java",
-                         user                    => 'ggate',
-                         group                   => 'dba',
-                         downloadDir             => '/var/tmp/install',
-                         puppetDownloadMntPoint  => '/software',
-      }
+  oradb::goldengate{ 'ggate11.2.1_java':
+    version                 => '11.2.1',
+    file                    => 'V38714-01.zip',
+    tarFile                 => 'ggs_Adapters_Linux_x64.tar',
+    goldengateHome          => "/opt/oracle/ggate_java",
+    user                    => 'ggate',
+    group                   => 'dba',
+    downloadDir             => '/var/tmp/install',
+    puppetDownloadMntPoint  => '/software',
+  }
 
 }
 
