@@ -54,7 +54,7 @@ module Puppet
 
     newparam(:oracle_product_home_dir) do
       desc <<-EOT
-        The oracle prodcut home folder.
+        The oracle product home folder.
       EOT
     end
 
@@ -76,9 +76,9 @@ module Puppet
       EOT
     end
 
-    newparam(:clusterware) do
+    newparam(:opatch_auto) do
       desc <<-EOT
-        clusterware bundle patch
+        opatch auto bundle patch
       EOT
     end
 

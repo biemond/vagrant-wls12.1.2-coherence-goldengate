@@ -1,0 +1,27 @@
+{
+  "name": "AlexCline-dirtree",
+  "version": "0.2.1",
+  "source": "UNKNOWN",
+  "author": "Alex Cline <alex.cline@gmail.com>",
+  "license": "Apache License, Version 2.0",
+  "summary": "The dirtree function builds an array of directories from a full directory path or an array of full directory paths.  The array can then be used to ensure all the required directories in a path are managed by puppet.",
+  "description": "The dirtree function builds an array of directories from a full directory path or an array of full directory paths.  The array can then be used to ensure all the required directories in a path are managed by puppet.",
+  "project_page": "https://github.com/AlexCline/dirtree",
+  "dependencies": [
+
+  ],
+  "types": [
+
+  ],
+  "checksums": {
+    "Modulefile": "bede224109c3d78199d301d96caf4646",
+    "README.md": "df2c2faa1a89bd9edb068b1d6aef3afd",
+    "Rakefile": "f37e6131fe7de9a49b09d31596f5fbf1",
+    "lib/puppet/parser/functions/dirtree.rb": "96e0c36b9dbeca31b27b41dfb9dd8abb",
+    "manifests/init.pp": "862b24db1111ef88966b784aeae50de7",
+    "spec/spec.opts": "a600ded995d948e393fbe2320ba8e51c",
+    "spec/spec_helper.rb": "890088360e8e947b68c83a6461228af0",
+    "spec/unit/puppet/parser/functions/dirtree_spec.rb": "59636824fe5494644b455a54746e5741",
+    "tests/init.pp": "8d87ed1e214e136a092769431a4a3a58"
+  }
+}

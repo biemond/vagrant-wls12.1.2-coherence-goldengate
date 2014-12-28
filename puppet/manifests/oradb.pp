@@ -1,9 +1,8 @@
 node 'oradb'  {
 
-   include oradb_os
-   include goldengate_11g
-   include oradb_11g
-   include oradb_maintenance
+  include oradb_os
+  include goldengate_11g
+  include oradb_11g
 
 }
 
@@ -106,7 +105,6 @@ class oradb_11g {
       oracleBase             => hiera('oracle_base_dir'),
       oracleHome             => hiera('oracle_home_dir'),
       userBaseDir            => '/home',
-      createUser             => false,
       user                   => hiera('oracle_os_user'),
       group                  => 'dba',
       group_install          => 'oinstall',
@@ -178,63 +176,31 @@ class oradb_11g {
 }
 
 class goldengate_11g {
-   require oradb_11g
-
-      file { "/oracle/product/12.1.2" :
-        ensure        => directory,
-        recurse       => false,
-        replace       => false,
-        mode          => 0775,
-        owner         => 'ggate',
-        group         => 'oinstall',
-      }
-
-      oradb::goldengate{ 'ggate12.1.2':
-                         version                 => '12.1.2',
-                         file                    => '121210_fbo_ggs_Linux_x64_shiphome.zip',
-                         databaseType            => 'Oracle',
-                         databaseVersion         => 'ORA11g',
-                         databaseHome            => hiera('oracle_home_dir'),
-                         oracleBase              => hiera('oracle_base_dir'),
-                         goldengateHome          => "/oracle/product/12.1.2/ggate",
-                         managerPort             => 16000,
-                         user                    => hiera('ggate_os_user'),
-                         group                   => 'oinstall',
-                         downloadDir             => '/install',
-                         puppetDownloadMntPoint  =>  hiera('oracle_source'),
-                         require                 => File["/oracle/product/12.1.2"],
-      }
-
-}
-
-
-class oradb_maintenance {
   require oradb_11g
 
-  case $operatingsystem {
-    CentOS, RedHat, OracleLinux, Ubuntu, Debian: {
-      $mtimeParam = "1"
-    }
-    Solaris: {
-      $mtimeParam = "+1"
-    }
+  file { '/oracle/product/12.1.2' :
+    ensure        => directory,
+    recurse       => false,
+    replace       => false,
+    mode          => '0775',
+    owner         => hiera('ggate_os_user'),
+    group         => 'oinstall',
   }
 
-
-  cron { 'oracle_db_opatch' :
-    command => "find /oracle/product/11.2/db/cfgtoollogs/opatch -name 'opatch*.log' -mtime ${mtimeParam} -exec rm {} \\; >> /tmp/opatch_db_purge.log 2>&1",
-    user    => oracle,
-    hour    => 06,
-    minute  => 34,
-  }
-
-  cron { 'oracle_db_lsinv' :
-    command => "find /oracle/product/11.2/db/cfgtoollogs/opatch/lsinv -name 'lsinventory*.txt' -mtime ${mtimeParam} -exec rm {} \\; >> /tmp/opatch_lsinv_db_purge.log 2>&1",
-    user    => oracle,
-    hour    => 06,
-    minute  => 32,
-  }
-
+  oradb::goldengate{ 'ggate12.1.2':
+    version                 => '12.1.2',
+    file                    => '121210_fbo_ggs_Linux_x64_shiphome.zip',
+    databaseType            => 'Oracle',
+    databaseVersion         => 'ORA11g',
+    databaseHome            => hiera('oracle_home_dir'),
+    oracleBase              => hiera('oracle_base_dir'),
+    goldengateHome          => "/oracle/product/12.1.2/ggate",
+    managerPort             => 16000,
+    user                    => hiera('ggate_os_user'),
+    group                   => 'oinstall',
+    downloadDir             => '/install',
+    puppetDownloadMntPoint  => hiera('oracle_source'),
+    require                 => File['/oracle/product/12.1.2'],
+ }
 
 }
-

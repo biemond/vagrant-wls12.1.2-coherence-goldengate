@@ -53,12 +53,13 @@ define oradb::opatchupgrade(
 
     if ! defined(File["${downloadDir}/${patchFile}"]) {
       file {"${downloadDir}/${patchFile}":
-        ensure => present,
-        path   => "${downloadDir}/${patchFile}",
-        source => "${mountDir}/${patchFile}",
-        mode   => '0775',
-        owner  => $user,
-        group  => $group,
+        ensure  => present,
+        path    => "${downloadDir}/${patchFile}",
+        source  => "${mountDir}/${patchFile}",
+        mode    => '0775',
+        owner   => $user,
+        group   => $group,
+        require => File[$downloadDir],
       }
     }
 
@@ -70,7 +71,7 @@ define oradb::opatchupgrade(
           force   => true,
         } ->
         exec { "extract opatch ${title} ${patchFile}":
-          command   => "unzip -n ${downloadDir}/${patchFile} -d ${oracleHome}",
+          command   => "unzip -o ${downloadDir}/${patchFile} -d ${oracleHome}",
           require   => File["${downloadDir}/${patchFile}"],
           path      => $execPath,
           user      => $user,
@@ -102,6 +103,7 @@ define oradb::opatchupgrade(
             mode    => '0775',
             owner   => $user,
             group   => $group,
+            require => File[$downloadDir],
           }
 
           exec { "ksh ${downloadDir}/opatch_upgrade_${title}_${opversion}.ksh":
@@ -115,6 +117,7 @@ define oradb::opatchupgrade(
             logoutput => true,
           }
         }
+
       }
       default: {
         fail('Unrecognized operating system')
